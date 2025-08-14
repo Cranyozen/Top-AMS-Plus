@@ -1,0 +1,7 @@
+# ESP IDF
+# Build directories
+build/
+# CMake files
+
+# IDE
+.vscode/

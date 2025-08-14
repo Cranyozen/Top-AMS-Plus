@@ -1,0 +1,14 @@
+## Set flash size to 4MB
+
+```
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+```
+
+## Skip TLS certificate verification **RISKY**
+
+```
+CONFIG_ESP_TLS_INSECURE=y
+CONFIG_ESP_TLS_SKIP_SERVER_CERT_VERIFY=y
+```
