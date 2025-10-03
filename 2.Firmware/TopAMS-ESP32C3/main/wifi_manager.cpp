@@ -1,12 +1,3 @@
-/* Esptouch example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
@@ -74,16 +65,12 @@ void WifiManager::event_handler(void* arg, esp_event_base_t event_base,
         }
 #endif
 
-        // memcpy(ssid, evt->ssid, sizeof(evt->ssid));
-        // memcpy(password, evt->password, sizeof(evt->password));
-        // strncpy((char*)wifi_config.sta.ssid, (const char*)evt->ssid, sizeof(wifi_config.sta.ssid));
-        // strncpy((char*)wifi_config.sta.password, (const char*)evt->password, sizeof(wifi_config.sta.password));
         // copy to ssid and password
         ssid.assign((const char*)evt->ssid);
         password.assign((const char*)evt->password);
         ESP_LOGI(TAG, "SSID:%s", ssid.c_str());
         ESP_LOGI(TAG, "PASSWORD:%s", password.c_str());
-        // 保存到 NVS
+        // Save to NVS
         auto nvs = Instance::get().nvs_manager;
         nvs->set("wifi_ssid", ssid);
         nvs->set("wifi_pass", password);

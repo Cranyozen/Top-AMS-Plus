@@ -25,7 +25,7 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
             self->mqtt_status_ = BAMBU_MQTT_STATUS_CONNECTED;
 
-            // Subscribe to the topic
+            // Subscribe to the report topic
             // topic: device/serial/report
             char topic[128];
             snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, self->serial_.c_str(), BAMBU_MQTT_TOPIC_REPORT);
@@ -54,6 +54,7 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
                 }
 
                 // Try to parser data
+                // 尝试解析基本信息，尽管不是必须的
                 /*
                 {
                     "print": {
@@ -131,17 +132,20 @@ void BambuMQTT::start() {
     mqtt_cfg.broker.address.uri = broker_uri;
     mqtt_cfg.broker.verification.skip_cert_common_name_check = true;
     mqtt_cfg.broker.verification.certificate = nullptr; // 不验证证书
+    // 证书问题似乎需要修改 sdkconfig 才能彻底解决，或内置证书验证
     mqtt_cfg.credentials.username = BAMBU_MQTT_DEFAULT_USER;
     mqtt_cfg.credentials.authentication.password = password_.c_str();
     mqtt_cfg.session.keepalive = 120;
 
     // 关键优化配置
+    // Thanks to original Top-AMS Project
     mqtt_cfg.buffer.size = 4096;                  // 增大接收缓冲区
     mqtt_cfg.buffer.out_size = 2048;              // 发送缓冲区
     mqtt_cfg.network.reconnect_timeout_ms = 5000; // 5秒重连
     mqtt_cfg.task.stack_size = 6144;              // 增大任务栈
     mqtt_cfg.task.priority = 5;                   // 提高任务优先级
     
+    // WARNING: 直接 Log 数据可能导致关键隐私数据泄漏
     ESP_LOGI(TAG, "Connecting to MQTT broker at %s, pwd %s", broker_uri, password_.c_str());
 
     client_ = esp_mqtt_client_init(&mqtt_cfg);
