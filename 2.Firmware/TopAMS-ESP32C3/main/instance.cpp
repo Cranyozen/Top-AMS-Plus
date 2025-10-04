@@ -9,6 +9,7 @@ Instance::Instance() {
     wifi_manager = std::make_shared<WifiManager>();
     ws_server = std::make_shared<WSServer>();
     nvs_manager = std::make_shared<NVSManager>();
+    filament_manager = std::make_shared<FilamentManager>();
     esp_efuse_mac_get_default(mac_address);
 
     // set device name based on MAC address
@@ -22,6 +23,8 @@ void Instance::init() {
     // bambu_mqtt->start();
     nvs_manager->init();
     wifi_manager->init();
+    // ws_server->start();
+    filament_manager->init();
 }
 
 void Instance::deinit() {

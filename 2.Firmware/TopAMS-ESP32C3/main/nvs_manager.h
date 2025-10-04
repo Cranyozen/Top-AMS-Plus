@@ -161,6 +161,18 @@ public:
             if (err == ESP_OK) {
                 value = *reinterpret_cast<double*>(&temp);
             }
+        } else if constexpr (std::is_same_v<T, const char*>) {
+            size_t required_size = 0;
+            err = nvs_get_str(nvs_handle, key, nullptr, &required_size);
+            if (err == ESP_OK && required_size > 0) {
+                char* buffer = new char[required_size];
+                err = nvs_get_str(nvs_handle, key, buffer, &required_size);
+                if (err == ESP_OK) {
+                    value = buffer; // 注意：调用者需要负责释放内存
+                } else {
+                    delete[] buffer;
+                }
+            }
         } else if constexpr (std::is_same_v<T, std::string>) {
             size_t required_size = 0;
             err = nvs_get_str(nvs_handle, key, nullptr, &required_size);

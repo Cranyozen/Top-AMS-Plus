@@ -20,9 +20,11 @@
 #include <esp_http_server.h>
 #include "bambu_mqtt.h"
 #include "ws_server.h"
+#include "filament_manager.h"
 
 const char *WSServer::TAG = "[WebSocketServer]";
 
+void handle_ws_message(const char* message, std::string& response);
 
 WSServer::WSServer() : server(nullptr) {}
 WSServer::~WSServer() { stop(); }
@@ -102,45 +104,54 @@ esp_err_t WSServer::echo_handler(httpd_req_t *req) {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
         return ESP_OK;
     }
+
     httpd_ws_frame_t ws_pkt;
     uint8_t *buf = NULL;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-    /* Set max_len = 0 to get the frame len */
+
+    // 获取 WebSocket 帧长度
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
         return ret;
     }
+
     ESP_LOGI(TAG, "frame len is %d", ws_pkt.len);
     if (ws_pkt.len) {
-        /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
-        buf = (uint8_t *)calloc(1, ws_pkt.len + 1); // 修正类型转换
+        buf = (uint8_t *)calloc(1, ws_pkt.len + 1); // 为 NULL 终止符分配空间
         if (buf == NULL) {
             ESP_LOGE(TAG, "Failed to calloc memory for buf");
             return ESP_ERR_NO_MEM;
         }
-        ws_pkt.payload = (uint8_t *)buf; // 强制类型转换，修复 void* 到 uint8_t* 的错误
-        /* Set max_len = ws_pkt.len to get the frame payload */
+
+        ws_pkt.payload = (uint8_t *)buf;
         ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
             free(buf);
             return ret;
         }
+
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
-    }
-    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
-    if (ws_pkt.type == HTTPD_WS_TYPE_TEXT &&
-        strcmp((char*)ws_pkt.payload,"Trigger async") == 0) {
-        free(buf);
-        return trigger_async_send(req->handle, req);
+
+        std::string response;
+        // 处理 WebSocket 消息
+        handle_ws_message(reinterpret_cast<const char*>(ws_pkt.payload), response);
+
+        // 发送响应
+        httpd_ws_frame_t response_pkt;
+        memset(&response_pkt, 0, sizeof(httpd_ws_frame_t));
+        response_pkt.type = HTTPD_WS_TYPE_TEXT;
+        response_pkt.payload = (uint8_t *)response.c_str();
+        response_pkt.len = response.length();
+
+        ret = httpd_ws_send_frame(req, &response_pkt);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+        }
     }
 
-    ret = httpd_ws_send_frame(req, &ws_pkt);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
-    }
     free(buf);
     return ret;
 }
@@ -172,4 +183,124 @@ httpd_handle_t WSServer::start_webserver() {
 esp_err_t WSServer::stop_webserver(httpd_handle_t server) {
     // Stop the httpd server
     return httpd_stop(server);
+}
+
+static FilamentManager filamentManager;
+
+void handle_ws_message(const char* message, std::string& response) {
+    cJSON* root = cJSON_Parse(message);
+    if (!root) {
+        response = R"({"error": "Invalid JSON"})";
+        return;
+    }
+    cJSON* type = cJSON_GetObjectItem(root, "type");
+    if (!cJSON_IsString(type)) {
+        response = R"({"error": "Missing or invalid action"})";
+        cJSON_Delete(root);
+        return;
+    }
+
+    auto type_char = type->valuestring;
+    if (strcmp(type_char, "setting") == 0) {
+        // Handle settings actions here
+        cJSON* key = cJSON_GetObjectItem(root, "key");
+        if (!cJSON_IsString(key)) {
+            response = R"({"error": "Missing or invalid key"})";
+            cJSON_Delete(root);
+            return;
+        }
+        auto key_char = key->valuestring;
+        if (strcmp(key_char, "wifi_ssid") == 0) {
+            cJSON* value = cJSON_GetObjectItem(root, "value");
+            if (cJSON_IsString(value)) {
+                // Save WiFi SSID to NVS or appropriate storage
+                response = R"({"success": true})";
+            } else {
+                response = R"({"error": "Invalid value for wifi_ssid"})";
+            }
+        } else if (strcmp(key_char, "wifi_password") == 0) {
+            cJSON* value = cJSON_GetObjectItem(root, "value");
+            if (cJSON_IsString(value)) {
+                // Save WiFi password to NVS or appropriate storage
+                response = R"({"success": true})";
+            } else {
+                response = R"({"error": "Invalid value for wifi_password"})";
+            }
+        } else {
+            response = R"({"error": "Unknown setting key"})";
+        }
+        
+    } else if (strcmp(type_char, "filament") == 0)
+    {
+        cJSON* action = cJSON_GetObjectItem(root, "action");
+        if (!cJSON_IsString(action)) {
+            response = R"({"error": "Missing or invalid action"})";
+            cJSON_Delete(root);
+            return;
+        }
+
+        std::string action_str = action->valuestring;
+        if (action_str == "add") {
+            cJSON* motor_id = cJSON_GetObjectItem(root, "motor_id");
+            cJSON* metadata = cJSON_GetObjectItem(root, "metadata");
+            if (cJSON_IsNumber(motor_id) && cJSON_IsString(metadata)) {
+                int id = filamentManager.addFilament(motor_id->valueint, metadata->valuestring);
+                if (id != -1) {
+                    response = R"({"success": true, "id": )" + std::to_string(id) + "}";
+                } else {
+                    response = R"({"error": "Motor ID already in use"})";
+                }
+            } else {
+                response = R"({"error": "Invalid parameters"})";
+            }
+        } else if (action_str == "remove") {
+            cJSON* id = cJSON_GetObjectItem(root, "id");
+            if (cJSON_IsNumber(id)) {
+                bool success = filamentManager.removeFilament(id->valueint);
+                response = success ? R"({"success": true})" : R"({"error": "ID not found"})";
+            } else {
+                response = R"({"error": "Invalid parameters"})";
+            }
+        } else if (action_str == "update") {
+            cJSON* id = cJSON_GetObjectItem(root, "id");
+            cJSON* motor_id = cJSON_GetObjectItem(root, "motor_id");
+            cJSON* metadata = cJSON_GetObjectItem(root, "metadata");
+            if (cJSON_IsNumber(id)) {
+                bool success = filamentManager.updateFilament(
+                    id->valueint,
+                    cJSON_IsNumber(motor_id) ? motor_id->valueint : -1,
+                    cJSON_IsString(metadata) ? metadata->valuestring : "");
+                response = success ? R"({"success": true})" : R"({"error": "Update failed"})";
+            } else {
+                response = R"({"error": "Invalid parameters"})";
+            }
+        } else if (action_str == "get") {
+            cJSON* id = cJSON_GetObjectItem(root, "id");
+            if (cJSON_IsNumber(id)) {
+                const Filament* filament = filamentManager.getFilamentById(id->valueint);
+                if (filament) {
+                    cJSON* filament_json = cJSON_CreateObject();
+                    cJSON_AddNumberToObject(filament_json, "id", filament->id);
+                    cJSON_AddNumberToObject(filament_json, "motor_id", filament->motor_id);
+                    cJSON_AddStringToObject(filament_json, "metadata", filament->metadata);
+                    char* json_str = cJSON_Print(filament_json);
+                    response = json_str;
+                    cJSON_free(json_str);
+                    cJSON_Delete(filament_json);
+                } else {
+                    response = R"({"error": "ID not found"})";
+                }
+            } else {
+                response = R"({"error": "Invalid parameters"})";
+            }
+        } else {
+            response = R"({"error": "Unknown action"})";
+        }
+    } else if (false) {
+
+    } else {
+        response = R"({"error": "Unknown type"})";
+    }
+
+    cJSON_Delete(root);
 }

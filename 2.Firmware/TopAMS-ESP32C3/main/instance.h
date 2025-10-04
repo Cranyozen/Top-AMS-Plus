@@ -5,6 +5,7 @@
 #include "wifi_manager.h"
 #include "nvs_manager.h"
 #include "ws_server.h"
+#include "filament_manager.h"
 #include "mdns_service.h"
 
 class Instance {
@@ -21,6 +22,7 @@ public:
     std::shared_ptr<WifiManager> wifi_manager;
     std::shared_ptr<WSServer> ws_server;
     std::shared_ptr<NVSManager> nvs_manager;
+    std::shared_ptr<FilamentManager> filament_manager;
     std::shared_ptr<MDnsService> mdns_service;
 
     BambuStatus bambu_status;
