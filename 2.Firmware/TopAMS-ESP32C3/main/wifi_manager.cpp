@@ -48,7 +48,8 @@ void WifiManager::event_handler(void* arg, esp_event_base_t event_base,
 
         smartconfig_event_got_ssid_pswd_t *evt = (smartconfig_event_got_ssid_pswd_t *)event_data;
         wifi_config_t wifi_config;
-        std::string ssid, password;
+        char ssid[32] = {0};
+        char password[64] = {0};
         uint8_t rvd_data[33] = {0};
 
         bzero(&wifi_config, sizeof(wifi_config_t));
@@ -66,10 +67,10 @@ void WifiManager::event_handler(void* arg, esp_event_base_t event_base,
 #endif
 
         // copy to ssid and password
-        ssid.assign((const char*)evt->ssid);
-        password.assign((const char*)evt->password);
-        ESP_LOGI(TAG, "SSID:%s", ssid.c_str());
-        ESP_LOGI(TAG, "PASSWORD:%s", password.c_str());
+        memcpy(ssid, evt->ssid, sizeof(evt->ssid));
+        memcpy(password, evt->password, sizeof(evt->password));
+        ESP_LOGI(TAG, "SSID:%s", ssid);
+        ESP_LOGI(TAG, "PASSWORD:%s", password);
         // Save to NVS
         auto nvs = Instance::get().nvs_manager;
         nvs->set("wifi_ssid", ssid);
@@ -98,7 +99,8 @@ void WifiManager::init()
     esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
     assert(sta_netif);
 
-    std::string ssid, password;
+    char ssid[32] = {0};
+    char password[64] = {0};
     auto nvs = Instance::get().nvs_manager;
     bool nvs_ok = false;
 
@@ -110,12 +112,12 @@ void WifiManager::init()
 
     if (nvs->get("wifi_ssid", ssid) == ESP_OK && nvs->get("wifi_pass", password) == ESP_OK) {
         ESP_LOGI(TAG, "Find SSID and password in NVS");
-        ESP_LOGI(TAG, "SSID: %s", ssid.c_str());
-        ESP_LOGI(TAG, "Password: %s", password.c_str());
+        ESP_LOGI(TAG, "SSID: %s", ssid);
+        ESP_LOGI(TAG, "Password: %s", password);
         wifi_config_t wifi_config;
         memset(&wifi_config, 0, sizeof(wifi_config));
-        strncpy((char*)wifi_config.sta.ssid, ssid.c_str(), sizeof(wifi_config.sta.ssid));
-        strncpy((char*)wifi_config.sta.password, password.c_str(), sizeof(wifi_config.sta.password));
+        strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+        strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
         ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
         ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
         ESP_ERROR_CHECK( esp_wifi_start() );
@@ -160,4 +162,16 @@ bool WifiManager::is_connected()
         // 获取失败，可能未连接
         return false;
     }
+}
+
+bool WifiManager::set_ssid(const char *ssid) {
+    auto nvs = Instance::get().nvs_manager;
+    nvs->set("wifi_ssid", ssid);
+    return nvs->commit() == ESP_OK;
+}
+
+bool WifiManager::set_password(const char *password) {
+    auto nvs = Instance::get().nvs_manager;
+    nvs->set("wifi_pass", password);
+    return nvs->commit() == ESP_OK;
 }

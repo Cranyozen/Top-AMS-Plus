@@ -3,7 +3,6 @@
 
 #include <nvs_flash.h>
 #include <nvs.h>
-#include <string>
 #include <cstring>
 #include <vector>
 #include <type_traits>
@@ -11,10 +10,12 @@
 
 #define DEFAULT_NAMESPACE "storage"
 
+#define NVS_TAG "NVSManager"
+
 class NVSManager {
 private:
     nvs_handle_t nvs_handle;
-    std::string namespace_name;
+    const char* namespace_name;
     bool is_initialized;
 
 public:
@@ -41,14 +42,14 @@ public:
             err = nvs_flash_init();
         }
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS flash init failed: %s", esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS flash init failed: %s", esp_err_to_name(err));
             return err;
         }
 
         // 打开 NVS 命名空间
-        err = nvs_open(namespace_name.c_str(), NVS_READWRITE, &nvs_handle);
+        err = nvs_open(namespace_name, NVS_READWRITE, &nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS open failed for namespace '%s': %s", namespace_name.c_str(), esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS open failed for namespace '%s': %s", namespace_name, esp_err_to_name(err));
             return err;
         }
 
@@ -64,9 +65,9 @@ public:
      * @return true 成功, false 失败
      */
     template<typename T>
-    esp_err_t set(const std::string& key, const T& value) {
+    esp_err_t set(const char* key, const T& value) {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
         }
 
@@ -74,38 +75,38 @@ public:
 
         // 根据类型自动选择对应的 NVS API
         if constexpr (std::is_same_v<T, int8_t>) {
-            err = nvs_set_i8(nvs_handle, key.c_str(), value);
+            err = nvs_set_i8(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, uint8_t>) {
-            err = nvs_set_u8(nvs_handle, key.c_str(), value);
+            err = nvs_set_u8(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, int16_t>) {
-            err = nvs_set_i16(nvs_handle, key.c_str(), value);
+            err = nvs_set_i16(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, uint16_t>) {
-            err = nvs_set_u16(nvs_handle, key.c_str(), value);
+            err = nvs_set_u16(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, int32_t>) {
-            err = nvs_set_i32(nvs_handle, key.c_str(), value);
+            err = nvs_set_i32(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, uint32_t>) {
-            err = nvs_set_u32(nvs_handle, key.c_str(), value);
+            err = nvs_set_u32(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, int64_t>) {
-            err = nvs_set_i64(nvs_handle, key.c_str(), value);
+            err = nvs_set_i64(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, uint64_t>) {
-            err = nvs_set_u64(nvs_handle, key.c_str(), value);
+            err = nvs_set_u64(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, float>) {
-            err = nvs_set_u32(nvs_handle, key.c_str(), *reinterpret_cast<const uint32_t*>(&value));
+            err = nvs_set_u32(nvs_handle, key, *reinterpret_cast<const uint32_t*>(&value));
         } else if constexpr (std::is_same_v<T, double>) {
-            err = nvs_set_u64(nvs_handle, key.c_str(), *reinterpret_cast<const uint64_t*>(&value));
+            err = nvs_set_u64(nvs_handle, key, *reinterpret_cast<const uint64_t*>(&value));
         } else if constexpr (std::is_same_v<T, std::string>) {
-            err = nvs_set_str(nvs_handle, key.c_str(), value.c_str());
+            err = nvs_set_str(nvs_handle, key, value.c_str());
         } else if constexpr (std::is_same_v<T, const char*>) {
-            err = nvs_set_str(nvs_handle, key.c_str(), value);
+            err = nvs_set_str(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, bool>) {
-            err = nvs_set_u8(nvs_handle, key.c_str(), value ? 1 : 0);
+            err = nvs_set_u8(nvs_handle, key, value ? 1 : 0);
         } else {
             // 对于其他类型（如结构体、数组等），使用 blob 存储
-            err = nvs_set_blob(nvs_handle, key.c_str(), &value, sizeof(T));
+            err = nvs_set_blob(nvs_handle, key, &value, sizeof(T));
         }
 
         if (err != ESP_OK) {
-            ESP_LOGW("NVSManager", "NVS set failed for key '%s': %s", key.c_str(), esp_err_to_name(err));
+            ESP_LOGW(NVS_TAG, "NVS set failed for key '%s': %s", key, esp_err_to_name(err));
             return err;
         }
 
@@ -120,9 +121,9 @@ public:
      * @return true 成功, false 失败
      */
     template<typename T>
-    esp_err_t get(const std::string& key, T& value) {
+    esp_err_t get(const char* key, T& value) {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
         }
 
@@ -130,60 +131,60 @@ public:
 
         // 根据类型自动选择对应的 NVS API
         if constexpr (std::is_same_v<T, int8_t>) {
-            err = nvs_get_i8(nvs_handle, key.c_str(), &value);
+            err = nvs_get_i8(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, uint8_t>) {
-            err = nvs_get_u8(nvs_handle, key.c_str(), &value);
+            err = nvs_get_u8(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, int16_t>) {
-            err = nvs_get_i16(nvs_handle, key.c_str(), &value);
+            err = nvs_get_i16(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, uint16_t>) {
-            err = nvs_get_u16(nvs_handle, key.c_str(), &value);
+            err = nvs_get_u16(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, int32_t>) {
-            err = nvs_get_i32(nvs_handle, key.c_str(), &value);
+            err = nvs_get_i32(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, uint32_t>) {
-            err = nvs_get_u32(nvs_handle, key.c_str(), &value);
+            err = nvs_get_u32(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, int64_t>) {
-            err = nvs_get_i64(nvs_handle, key.c_str(), &value);
+            err = nvs_get_i64(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, uint64_t>) {
-            err = nvs_get_u64(nvs_handle, key.c_str(), &value);
+            err = nvs_get_u64(nvs_handle, key, &value);
         } else if constexpr (std::is_same_v<T, float>) {
             uint32_t temp;
-            err = nvs_get_u32(nvs_handle, key.c_str(), &temp);
+            err = nvs_get_u32(nvs_handle, key, &temp);
             if (err == ESP_OK) {
                 value = *reinterpret_cast<float*>(&temp);
             }
         } else if constexpr (std::is_same_v<T, double>) {
             uint64_t temp;
-            err = nvs_get_u64(nvs_handle, key.c_str(), &temp);
+            err = nvs_get_u64(nvs_handle, key, &temp);
             if (err == ESP_OK) {
                 value = *reinterpret_cast<double*>(&temp);
             }
         } else if constexpr (std::is_same_v<T, std::string>) {
             size_t required_size = 0;
-            err = nvs_get_str(nvs_handle, key.c_str(), nullptr, &required_size);
+            err = nvs_get_str(nvs_handle, key, nullptr, &required_size);
             if (err == ESP_OK && required_size > 0) {
                 std::vector<char> buffer(required_size);
-                err = nvs_get_str(nvs_handle, key.c_str(), buffer.data(), &required_size);
+                err = nvs_get_str(nvs_handle, key, buffer.data(), &required_size);
                 if (err == ESP_OK) {
                     value = std::string(buffer.data());
                 }
             }
         } else if constexpr (std::is_same_v<T, bool>) {
             uint8_t temp;
-            err = nvs_get_u8(nvs_handle, key.c_str(), &temp);
+            err = nvs_get_u8(nvs_handle, key, &temp);
             if (err == ESP_OK) {
                 value = (temp != 0);
             }
         } else {
             // 对于其他类型（如结构体、数组等），使用 blob 读取
             size_t required_size = sizeof(T);
-            err = nvs_get_blob(nvs_handle, key.c_str(), &value, &required_size);
+            err = nvs_get_blob(nvs_handle, key, &value, &required_size);
         }
 
         if (err != ESP_OK) {
             if (err == ESP_ERR_NVS_NOT_FOUND) {
-                ESP_LOGW("NVSManager", "NVS key '%s' not found", key.c_str());
+                ESP_LOGW(NVS_TAG, "NVS key '%s' not found", key);
             } else {
-                ESP_LOGE("NVSManager", "NVS get failed for key '%s': %s", key.c_str(), esp_err_to_name(err));
+                ESP_LOGE(NVS_TAG, "NVS get failed for key '%s': %s", key, esp_err_to_name(err));
             }
             return err;
         }
@@ -197,13 +198,13 @@ public:
      */
     esp_err_t commit() {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
         }
 
         esp_err_t err = nvs_commit(nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS commit failed: %s", esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS commit failed: %s", esp_err_to_name(err));
         }
         return err;
     }
@@ -213,21 +214,21 @@ public:
      * @param key 键名
      * @return true 成功, false 失败
      */
-    esp_err_t erase(const std::string& key) {
+    esp_err_t erase(const char* key) {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
         }
 
-        esp_err_t err = nvs_erase_key(nvs_handle, key.c_str());
+        esp_err_t err = nvs_erase_key(nvs_handle, key);
         if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) {
-            ESP_LOGE("NVSManager", "NVS erase failed for key '%s': %s", key.c_str(), esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS erase failed for key '%s': %s", key, esp_err_to_name(err));
             return err;
         }
 
         err = nvs_commit(nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS commit failed: %s", esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS commit failed: %s", esp_err_to_name(err));
             return err;
         }
 
@@ -240,19 +241,19 @@ public:
      */
     esp_err_t clear() {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
         }
 
         esp_err_t err = nvs_erase_all(nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS erase all failed: %s", esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS erase all failed: %s", esp_err_to_name(err));
             return err;
         }
 
         err = nvs_commit(nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE("NVSManager", "NVS commit failed: %s", esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS commit failed: %s", esp_err_to_name(err));
             return err;
         }
 
@@ -264,14 +265,14 @@ public:
      * @param key 键名
      * @return true 存在, false 不存在
      */
-    bool exists(const std::string& key) {
+    bool exists(const char* key) {
         if (!is_initialized) {
-            ESP_LOGE("NVSManager", "NVS not initialized");
+            ESP_LOGE(NVS_TAG, "NVS not initialized");
             return false;
         }
 
         // 尝试获取值的大小来检查键是否存在
-        esp_err_t err = nvs_get_u32(nvs_handle, key.c_str(), nullptr);
+        esp_err_t err = nvs_get_u32(nvs_handle, key, nullptr);
         return (err == ESP_OK || err == ESP_ERR_NVS_INVALID_LENGTH);
     }
 };
