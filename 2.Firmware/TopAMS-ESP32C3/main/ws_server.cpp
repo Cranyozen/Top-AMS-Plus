@@ -21,7 +21,8 @@
 #include "bambu_mqtt.h"
 #include "ws_server.h"
 
-const char *WSServer::TAG = "ws_server";
+const char *WSServer::TAG = "[WebSocketServer]";
+
 
 WSServer::WSServer() : server(nullptr) {}
 WSServer::~WSServer() { stop(); }

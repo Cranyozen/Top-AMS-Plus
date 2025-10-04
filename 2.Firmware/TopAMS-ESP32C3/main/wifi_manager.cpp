@@ -25,7 +25,7 @@ EventGroupHandle_t WifiManager::s_wifi_event_group = nullptr;
    to the AP with an IP? */
 const int WifiManager::CONNECTED_BIT = BIT0;
 const int WifiManager::ESPTOUCH_DONE_BIT = BIT1;
-static const char *TAG = "smartconfig";
+static const char *TAG = "[SmartConfig]";
 
 WifiManager::WifiManager() {}
 

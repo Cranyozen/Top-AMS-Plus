@@ -7,7 +7,7 @@
 // #include "wifi_manager.h"
 #include "instance.h"
 
-static const char *TAG = "main";
+static const char *TAG = "[Main]";
 
 extern "C" void app_main(void)
 {

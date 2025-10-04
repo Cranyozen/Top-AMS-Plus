@@ -10,7 +10,7 @@
 
 #define DEFAULT_NAMESPACE "storage"
 
-#define NVS_TAG "NVSManager"
+#define NVS_TAG "[NVSManager]"
 
 class NVSManager {
 private:
@@ -54,6 +54,7 @@ public:
         }
 
         is_initialized = true;
+        ESP_LOGI(NVS_TAG, "NVS initialized and namespace '%s' opened", namespace_name);
         return err;
     }
 
@@ -109,6 +110,8 @@ public:
             ESP_LOGW(NVS_TAG, "NVS set failed for key '%s': %s", key, esp_err_to_name(err));
             return err;
         }
+
+        ESP_LOGI(NVS_TAG, "NVS set successful for key '%s'", key);
 
         return err;
     }
@@ -206,6 +209,7 @@ public:
         if (err != ESP_OK) {
             ESP_LOGE(NVS_TAG, "NVS commit failed: %s", esp_err_to_name(err));
         }
+        ESP_LOGI(NVS_TAG, "NVS commit successful");
         return err;
     }
 

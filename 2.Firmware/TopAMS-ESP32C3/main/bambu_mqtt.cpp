@@ -11,7 +11,7 @@
 #define BAMBU_MQTT_DEFAULT_USER "bblp"
 #define BAMBU_MQTT_DEFAULT_PORT 8883
 
-static const char *TAG = "BambuMQTT";
+static const char *TAG = "[BambuMQTT]";
 
 void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
                                int32_t event_id, void *event_data) {
@@ -47,6 +47,7 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
             // printf("DATA=%.*s\r\n", event->data_len, event->data);
             ESP_LOGI(TAG, "Received data on topic: %.*s", event->topic_len, event->topic);
             if (event->data_len > 0) {
+                // WARNING: 直接 Log 数据可能导致数据泄漏，日志过长，刷新过快等问题
                 ESP_LOGI(TAG, "Data: %.*s", event->data_len, event->data);
                 if (event->topic_len > 0) {
                     std::string topic(event->topic, event->topic_len);
@@ -87,9 +88,9 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
                         if (wifi_signal) {
                             self->status_.wifi_signal = wifi_signal->valuestring ? wifi_signal->valuestring : "";
                         }
-                        ESP_LOGI(TAG, "Nozzle Temperature: %.2f", self->status_.nozzle_temper);
-                        ESP_LOGI(TAG, "Bed Temperature: %.2f", self->status_.bed_temper);
-                        ESP_LOGI(TAG, "WiFi Signal: %s", self->status_.wifi_signal.c_str());
+                        // ESP_LOGI(TAG, "Nozzle Temperature: %.2f", self->status_.nozzle_temper);
+                        // ESP_LOGI(TAG, "Bed Temperature: %.2f", self->status_.bed_temper);
+                        // ESP_LOGI(TAG, "WiFi Signal: %s", self->status_.wifi_signal.c_str());
                     }
                     // char* json_data = cJSON_Print(root);
                     // if (json_data) {
