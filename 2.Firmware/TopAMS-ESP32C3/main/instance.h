@@ -5,6 +5,7 @@
 #include "wifi_manager.h"
 #include "nvs_manager.h"
 #include "ws_server.h"
+#include "mdns_service.h"
 
 class Instance {
 public:
@@ -20,7 +21,14 @@ public:
     std::shared_ptr<WifiManager> wifi_manager;
     std::shared_ptr<WSServer> ws_server;
     std::shared_ptr<NVSManager> nvs_manager;
+    std::shared_ptr<MDnsService> mdns_service;
+
     BambuStatus bambu_status;
+
+    // MAC Address
+    uint8_t mac_address[6];
+
+    std::string device_name;
 
     // 禁止拷贝
     Instance(const Instance&) = delete;

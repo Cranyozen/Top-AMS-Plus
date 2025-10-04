@@ -1,4 +1,5 @@
 #include "instance.h"
+#include "esp_mac.h"
 
 
 Instance::Instance() {
@@ -8,6 +9,14 @@ Instance::Instance() {
     wifi_manager = std::make_shared<WifiManager>();
     ws_server = std::make_shared<WSServer>();
     nvs_manager = std::make_shared<NVSManager>();
+    esp_efuse_mac_get_default(mac_address);
+
+    // set device name based on MAC address
+    char name[32];
+    snprintf(name, sizeof(name), "TopAMS-%02X%02X%02X", mac_address[3], mac_address[4], mac_address[5]);
+    device_name = std::string(name);
+
+    mdns_service = std::make_shared<MDnsService>(device_name, "TopAMS", "_http", 80);
 }
 void Instance::init() {
     // bambu_mqtt->start();

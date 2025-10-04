@@ -18,6 +18,12 @@ extern "C" void app_main(void)
     Instance::get().init();
     // wifi_manager.init();
 
+    // Print MAC Address
+    ESP_LOGI(TAG, "Device MAC Address: %02X:%02X:%02X:%02X:%02X:%02X",
+             Instance::get().mac_address[0], Instance::get().mac_address[1], Instance::get().mac_address[2],
+             Instance::get().mac_address[3], Instance::get().mac_address[4], Instance::get().mac_address[5]);
+    ESP_LOGI(TAG, "Device Name: %s", Instance::get().device_name.c_str());
+
     // WiFi Connect Event
     esp_event_handler_register(
         IP_EVENT,
@@ -26,6 +32,8 @@ extern "C" void app_main(void)
             ESP_LOGI(TAG, "WiFi connected, IP event received");
             Instance::get().bambu_mqtt->start(); // 启动 MQTT 客户端
             Instance::get().ws_server->start(); // 启动 WebSocket 服务器
+            Instance::get().mdns_service->init();
+            Instance::get().mdns_service->addService();
         },
         nullptr
     );
