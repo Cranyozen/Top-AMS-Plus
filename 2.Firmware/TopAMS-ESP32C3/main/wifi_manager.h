@@ -1,7 +1,5 @@
 #pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
 #include "esp_event.h"
 
 class WifiManager {

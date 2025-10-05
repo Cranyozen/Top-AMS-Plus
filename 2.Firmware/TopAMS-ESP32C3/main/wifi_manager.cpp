@@ -1,15 +1,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
 #include "esp_wifi.h"
-#include "esp_eap_client.h"
 #include "esp_event.h"
 #include "esp_log.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
-#include "esp_netif.h"
 #include "esp_smartconfig.h"
 #include "esp_mac.h"
 
@@ -174,4 +168,30 @@ bool WifiManager::set_password(const char *password) {
     auto nvs = Instance::get().nvs_manager;
     nvs->set("wifi_pass", password);
     return nvs->commit() == ESP_OK;
+}
+
+bool WifiManager::reconnect() {
+    if (is_connected()) {
+        ESP_LOGI(TAG, "Disconnecting from current WiFi");
+        ESP_ERROR_CHECK( esp_wifi_disconnect() );
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 等待一段时间
+    }
+    char ssid[32] = {0};
+    char password[64] = {0};
+    auto nvs = Instance::get().nvs_manager;
+    if (nvs->get("wifi_ssid", ssid) == ESP_OK && nvs->get("wifi_pass", password) == ESP_OK) {
+        ESP_LOGI(TAG, "Reconnecting with SSID: %s", ssid);
+        wifi_config_t wifi_config;
+        memset(&wifi_config, 0, sizeof(wifi_config));
+        strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+        strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+        ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
+        ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+        ESP_ERROR_CHECK( esp_wifi_start() );
+        ESP_ERROR_CHECK( esp_wifi_connect() );
+        return true;
+    } else {
+        ESP_LOGW(TAG, "No SSID and password in NVS");
+        return false;
+    }
 }

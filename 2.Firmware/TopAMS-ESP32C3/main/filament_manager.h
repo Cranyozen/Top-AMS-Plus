@@ -5,7 +5,6 @@
 #include <map>
 #include <memory>
 #include "model/filament.h"
-#include "nvs_manager.h"
 
 /**
  * @brief 3D打印耗材管理类

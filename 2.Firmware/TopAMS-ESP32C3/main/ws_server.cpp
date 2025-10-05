@@ -13,14 +13,12 @@
 #include <esp_system.h>
 #include <nvs_flash.h>
 #include <sys/param.h>
-#include "esp_netif.h"
-#include "esp_eth.h"
-#include "protocol_examples_common.h"
+#include "esp_mac.h"
 
 #include <esp_http_server.h>
-#include "bambu_mqtt.h"
 #include "ws_server.h"
 #include "filament_manager.h"
+#include "instance.h"
 
 const char *WSServer::TAG = "[WebSocketServer]";
 
@@ -230,8 +228,8 @@ void handle_ws_message(const char* message, std::string& response) {
             response = R"({"error": "Unknown setting key"})";
         }
         
-    } else if (strcmp(type_char, "filament") == 0)
-    {
+    } else if (strcmp(type_char, "system") == 0) {
+        // 针对系统操作的处理
         cJSON* action = cJSON_GetObjectItem(root, "action");
         if (!cJSON_IsString(action)) {
             response = R"({"error": "Missing or invalid action"})";
@@ -239,8 +237,37 @@ void handle_ws_message(const char* message, std::string& response) {
             return;
         }
 
-        std::string action_str = action->valuestring;
-        if (action_str == "add") {
+        const char* action_char = action->valuestring;
+        if (strcmp(action_char, "reboot") == 0) {
+            response = R"({"success": true, "message": "Rebooting..."})";
+            esp_restart();
+        } else if (strcmp(action_char, "reconnect_wifi") == 0) {
+            // 调用 WiFiManager 的 reconnect 方法
+            if (Instance::get().wifi_manager->reconnect()) {
+                response = R"({"success": true, "message": "Reconnecting to WiFi..."})";
+            } else {
+                response = R"({"error": "Failed to initiate WiFi reconnection"})";
+            }
+        } else if (strcmp(action_char, "get_mac") == 0) {
+            uint8_t mac[6];
+            esp_read_mac(mac, ESP_MAC_WIFI_STA);
+            char mac_str[18];
+            snprintf(mac_str, sizeof(mac_str), "%02X:%02X:%02X:%02X:%02X:%02X",
+                     mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+            response = std::string(R"({"success": true, "mac": ")") + mac_str + R"("})";
+        } else {
+            response = R"({"error": "Unknown action"})";
+        }
+    } else if (strcmp(type_char, "filament") == 0) {
+        cJSON* action = cJSON_GetObjectItem(root, "action");
+        if (!cJSON_IsString(action)) {
+            response = R"({"error": "Missing or invalid action"})";
+            cJSON_Delete(root);
+            return;
+        }
+
+        const char* action_char = action->valuestring;
+        if (strcmp(action_char, "add") == 0) {
             cJSON* motor_id = cJSON_GetObjectItem(root, "motor_id");
             cJSON* metadata = cJSON_GetObjectItem(root, "metadata");
             if (cJSON_IsNumber(motor_id) && cJSON_IsString(metadata)) {
@@ -253,7 +280,7 @@ void handle_ws_message(const char* message, std::string& response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (action_str == "remove") {
+        } else if (strcmp(action_char, "remove") == 0) {
             cJSON* id = cJSON_GetObjectItem(root, "id");
             if (cJSON_IsNumber(id)) {
                 bool success = filamentManager.removeFilament(id->valueint);
@@ -261,7 +288,7 @@ void handle_ws_message(const char* message, std::string& response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (action_str == "update") {
+        } else if (strcmp(action_char, "update") == 0) {
             cJSON* id = cJSON_GetObjectItem(root, "id");
             cJSON* motor_id = cJSON_GetObjectItem(root, "motor_id");
             cJSON* metadata = cJSON_GetObjectItem(root, "metadata");
@@ -274,7 +301,7 @@ void handle_ws_message(const char* message, std::string& response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (action_str == "get") {
+        } else if (strcmp(action_char, "list") == 0) {
             cJSON* id = cJSON_GetObjectItem(root, "id");
             if (cJSON_IsNumber(id)) {
                 const Filament* filament = filamentManager.getFilamentById(id->valueint);

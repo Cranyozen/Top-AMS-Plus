@@ -1,12 +1,9 @@
 #pragma once
 
-#include "esp_log.h"
 #include "mqtt_client.h"
 #include <string>
 
 #include "model/bambu_status.h"
-
-#include "cJSON.h"
 
 #define BAMBU_MQTT_DEFAULT_USER "bblp"
 #define BAMBU_MQTT_DEFAULT_PORT 8883

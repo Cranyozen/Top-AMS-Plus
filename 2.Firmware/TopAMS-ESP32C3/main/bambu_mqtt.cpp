@@ -1,12 +1,10 @@
 #include "bambu_mqtt.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
-#include "nvs_flash.h"
-#include "esp_event.h"
-#include "esp_netif.h"
 #include <cstdio>
 #include <stdint.h>
 #include <stdlib.h>
+#include "cJSON.h"
 
 #define BAMBU_MQTT_DEFAULT_USER "bblp"
 #define BAMBU_MQTT_DEFAULT_PORT 8883

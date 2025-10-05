@@ -7,6 +7,7 @@
 #include <vector>
 #include <type_traits>
 #include <iostream>
+#include "esp_log.h"
 
 #define DEFAULT_NAMESPACE "storage"
 

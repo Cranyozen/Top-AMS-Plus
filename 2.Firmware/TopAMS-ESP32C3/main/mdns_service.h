@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mdns_service.h"
-#include "esp_log.h"
 #include <string>
 
 class MDnsService {

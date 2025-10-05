@@ -5,3 +5,6 @@ build/
 
 # IDE
 .vscode/
+
+# clangd
+.cache/clangd/
