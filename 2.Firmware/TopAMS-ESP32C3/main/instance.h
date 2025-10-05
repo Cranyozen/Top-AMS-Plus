@@ -1,16 +1,16 @@
 #pragma once
 
-#include <memory>
 #include "bambu_mqtt.h"
-#include "wifi_manager.h"
-#include "nvs_manager.h"
-#include "ws_server.h"
 #include "filament_manager.h"
 #include "mdns_service.h"
+#include "nvs_manager.h"
+#include "wifi_manager.h"
+#include "ws_server.h"
+#include <memory>
 
 class Instance {
 public:
-    static Instance& get() {
+    static Instance &get() {
         static Instance instance;
         return instance;
     }
@@ -33,8 +33,8 @@ public:
     std::string device_name;
 
     // 禁止拷贝
-    Instance(const Instance&) = delete;
-    Instance& operator=(const Instance&) = delete;
+    Instance(const Instance &) = delete;
+    Instance &operator=(const Instance &) = delete;
 
 private:
     // 私有构造函数，在这里初始化服务

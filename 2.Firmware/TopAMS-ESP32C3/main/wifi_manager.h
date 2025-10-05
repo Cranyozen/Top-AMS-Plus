@@ -1,6 +1,6 @@
 #pragma once
 
-#include "esp_event.h"
+#include "esp_event.h" // IWYU pragma: keep
 
 class WifiManager {
 public:
@@ -9,14 +9,15 @@ public:
 
     bool is_connected();
 
-    bool set_ssid(const char* ssid);
+    bool set_ssid(const char *ssid);
 
-    bool set_password(const char* password);
+    bool set_password(const char *password);
 
     bool reconnect();
-    
+
 private:
-    static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+    static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
+                              void *event_data);
     static void smartconfig_task(void *parm);
     static EventGroupHandle_t s_wifi_event_group;
     static const int CONNECTED_BIT;

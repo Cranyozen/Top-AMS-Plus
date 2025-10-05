@@ -1,19 +1,19 @@
 #include "bambu_mqtt.h"
+#include "cJSON.h"
 #include "esp_log.h"
 #include "mqtt_client.h"
 #include <cstdio>
 #include <stdint.h>
 #include <stdlib.h>
-#include "cJSON.h"
 
 #define BAMBU_MQTT_DEFAULT_USER "bblp"
 #define BAMBU_MQTT_DEFAULT_PORT 8883
 
 static const char *TAG = "[BambuMQTT]";
 
-void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
-                               int32_t event_id, void *event_data) {
-    BambuMQTT *self = static_cast<BambuMQTT*>(handler_args);
+void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id,
+                                   void *event_data) {
+    BambuMQTT *self = static_cast<BambuMQTT *>(handler_args);
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
@@ -26,11 +26,13 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
             // Subscribe to the report topic
             // topic: device/serial/report
             char topic[128];
-            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, self->serial_.c_str(), BAMBU_MQTT_TOPIC_REPORT);
+            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, self->serial_.c_str(),
+                     BAMBU_MQTT_TOPIC_REPORT);
             ESP_LOGI(TAG, "Subscribing to topic: %s", topic);
             msg_id = esp_mqtt_client_subscribe(client, topic, 1);
             if (msg_id < 0) {
-                ESP_LOGE(TAG, "Failed to subscribe to topic: %s", BAMBU_MQTT_TOPIC_BASE "/" BAMBU_MQTT_TOPIC_REPORT);
+                ESP_LOGE(TAG, "Failed to subscribe to topic: %s",
+                         BAMBU_MQTT_TOPIC_BASE "/" BAMBU_MQTT_TOPIC_REPORT);
             } else {
                 ESP_LOGI(TAG, "Subscribed to topic successfully, msg_id=%d", msg_id);
             }
@@ -76,7 +78,7 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
                         cJSON *command = cJSON_GetObjectItem(print, "command");
                         cJSON *msg = cJSON_GetObjectItem(print, "msg");
                         cJSON *sequence_id = cJSON_GetObjectItem(print, "sequence_id");
-                        
+
                         if (nozzle_temper) {
                             self->status_.nozzle_temper = nozzle_temper->valuedouble;
                         }
@@ -84,7 +86,8 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
                             self->status_.bed_temper = bed_temper->valuedouble;
                         }
                         if (wifi_signal) {
-                            self->status_.wifi_signal = wifi_signal->valuestring ? wifi_signal->valuestring : "";
+                            self->status_.wifi_signal =
+                                wifi_signal->valuestring ? wifi_signal->valuestring : "";
                         }
                         // ESP_LOGI(TAG, "Nozzle Temperature: %.2f", self->status_.nozzle_temper);
                         // ESP_LOGI(TAG, "Bed Temperature: %.2f", self->status_.bed_temper);
@@ -114,14 +117,15 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base,
     }
 }
 
-BambuMQTT::BambuMQTT(const std::string &ip, const std::string &password, const std::string &serial, const BambuStatus &status, InfoCallback cb)
-    : client_(nullptr), ip_(ip), serial_(serial), password_(password), info_cb_(cb), status_(status) {
-    ESP_LOGI(TAG, "BambuMQTT constructed: ip=%s, serial=%s, password=%s", ip.c_str(), serial.c_str(), password.c_str());
+BambuMQTT::BambuMQTT(const std::string &ip, const std::string &password, const std::string &serial,
+                     const BambuStatus &status, InfoCallback cb)
+    : client_(nullptr), ip_(ip), serial_(serial), password_(password), info_cb_(cb),
+      status_(status) {
+    ESP_LOGI(TAG, "BambuMQTT constructed: ip=%s, serial=%s, password=%s", ip.c_str(),
+             serial.c_str(), password.c_str());
 }
 
-BambuMQTT::~BambuMQTT() {
-    stop();
-}
+BambuMQTT::~BambuMQTT() { stop(); }
 
 void BambuMQTT::start() {
     char broker_uri[128];
@@ -143,12 +147,13 @@ void BambuMQTT::start() {
     mqtt_cfg.network.reconnect_timeout_ms = 5000; // 5秒重连
     mqtt_cfg.task.stack_size = 6144;              // 增大任务栈
     mqtt_cfg.task.priority = 5;                   // 提高任务优先级
-    
+
     // WARNING: 直接 Log 数据可能导致关键隐私数据泄漏
     ESP_LOGI(TAG, "Connecting to MQTT broker at %s, pwd %s", broker_uri, password_.c_str());
 
     client_ = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, this);
+    esp_mqtt_client_register_event(client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID,
+                                   mqtt_event_handler, this);
     esp_mqtt_client_start(client_);
     ESP_LOGI(TAG, "BambuMQTT client started");
 }
@@ -168,14 +173,15 @@ int BambuMQTT::publish_message(const std::string &message) {
         return -1;
     }
 
-    std::string topic = std::string(BAMBU_MQTT_TOPIC_BASE) + "/" + serial_ + "/" + std::string(BAMBU_MQTT_TOPIC_REPORT);
+    std::string topic = std::string(BAMBU_MQTT_TOPIC_BASE) + "/" + serial_ + "/" +
+                        std::string(BAMBU_MQTT_TOPIC_REPORT);
     int msg_id = esp_mqtt_client_publish(client_, topic.c_str(), message.c_str(), 0, 1, 0);
-    
+
     if (msg_id < 0) {
         ESP_LOGE(TAG, "Failed to publish message: %s", message.c_str());
         return -1;
     }
-    
+
     ESP_LOGI(TAG, "Message published successfully: %s", message.c_str());
     return msg_id;
 }

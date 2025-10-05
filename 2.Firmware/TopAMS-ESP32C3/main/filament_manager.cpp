@@ -1,5 +1,5 @@
-#include <algorithm>
 #include "cJSON.h"
+#include <algorithm>
 
 #include "esp_log.h"
 
@@ -27,7 +27,7 @@ void FilamentManager::init() {
     }
 }
 
-int FilamentManager::addFilament(int motor_id, const char* metadata) {
+int FilamentManager::addFilament(int motor_id, const char *metadata) {
     if (getFilamentByMotorId(motor_id) != nullptr) {
         ESP_LOGW(TAG, "Motor ID %d is already in use", motor_id);
         return -1;
@@ -52,13 +52,13 @@ bool FilamentManager::removeFilament(int id) {
     return true;
 }
 
-bool FilamentManager::updateFilament(int id, int motor_id, const char* metadata) {
+bool FilamentManager::updateFilament(int id, int motor_id, const char *metadata) {
     auto it = id_to_index.find(id);
     if (it == id_to_index.end()) {
         return false;
     }
     size_t index = it->second;
-    Filament& filament = filaments[index];
+    Filament &filament = filaments[index];
     if (motor_id != -1 && motor_id != filament.motor_id) {
         if (getFilamentByMotorId(motor_id) != nullptr) {
             ESP_LOGW(TAG, "Motor ID %d is already in use", motor_id);
@@ -73,7 +73,7 @@ bool FilamentManager::updateFilament(int id, int motor_id, const char* metadata)
     return true;
 }
 
-const Filament* FilamentManager::getFilamentById(int id) const {
+const Filament *FilamentManager::getFilamentById(int id) const {
     auto it = id_to_index.find(id);
     if (it == id_to_index.end()) {
         return nullptr;
@@ -82,22 +82,21 @@ const Filament* FilamentManager::getFilamentById(int id) const {
     return &filaments[index];
 }
 
-const Filament* FilamentManager::getFilamentByMotorId(int motor_id) const {
+const Filament *FilamentManager::getFilamentByMotorId(int motor_id) const {
     auto it = std::find_if(filaments.begin(), filaments.end(),
-        [motor_id](const Filament& f) { return f.motor_id == motor_id; });
+                           [motor_id](const Filament &f) { return f.motor_id == motor_id; });
     if (it != filaments.end()) {
         return &(*it);
     }
     return nullptr;
 }
 
-const std::vector<Filament>& FilamentManager::getAllFilaments() const {
-    return filaments;
-}
+const std::vector<Filament> &FilamentManager::getAllFilaments() const { return filaments; }
 
-std::vector<const Filament*> FilamentManager::findFilamentsByMetadata(const char* key, const char* value) const {
-    std::vector<const Filament*> result;
-    for (const auto& filament : filaments) {
+std::vector<const Filament *> FilamentManager::findFilamentsByMetadata(const char *key,
+                                                                       const char *value) const {
+    std::vector<const Filament *> result;
+    for (const auto &filament : filaments) {
         if (filament.getMetadataValue(key) == value) {
             result.push_back(&filament);
         }
@@ -105,9 +104,7 @@ std::vector<const Filament*> FilamentManager::findFilamentsByMetadata(const char
     return result;
 }
 
-size_t FilamentManager::getCount() const {
-    return filaments.size();
-}
+size_t FilamentManager::getCount() const { return filaments.size(); }
 
 void FilamentManager::clear() {
     filaments.clear();
@@ -115,9 +112,9 @@ void FilamentManager::clear() {
     next_id = 1;
 }
 
-const char* FilamentManager::toJson() const {
+const char *FilamentManager::toJson() const {
     cJSON *json_array = cJSON_CreateArray();
-    for (const auto& filament : filaments) {
+    for (const auto &filament : filaments) {
         cJSON *filament_json = cJSON_CreateObject();
         cJSON_AddNumberToObject(filament_json, "id", filament.id);
         cJSON_AddNumberToObject(filament_json, "motor_id", filament.motor_id);
@@ -130,7 +127,7 @@ const char* FilamentManager::toJson() const {
     return json_string;
 }
 
-bool FilamentManager::fromJson(const char* json_string) {
+bool FilamentManager::fromJson(const char *json_string) {
     cJSON *json_array = cJSON_Parse(json_string);
     if (json_array == nullptr || !cJSON_IsArray(json_array)) {
         return false;
@@ -147,11 +144,11 @@ bool FilamentManager::fromJson(const char* json_string) {
         cJSON *id_obj = cJSON_GetObjectItemCaseSensitive(item, "id");
         cJSON *motor_id_obj = cJSON_GetObjectItemCaseSensitive(item, "motor_id");
         cJSON *metadata_obj = cJSON_GetObjectItemCaseSensitive(item, "metadata");
-        if (cJSON_IsNumber(id_obj) && cJSON_IsNumber(motor_id_obj) && 
+        if (cJSON_IsNumber(id_obj) && cJSON_IsNumber(motor_id_obj) &&
             cJSON_IsString(metadata_obj) && metadata_obj->valuestring != nullptr) {
             int id = id_obj->valueint;
             int motor_id = motor_id_obj->valueint;
-            const char* metadata = metadata_obj->valuestring;
+            const char *metadata = metadata_obj->valuestring;
             if (id_to_index.find(id) != id_to_index.end()) {
                 success = false;
                 continue;
@@ -192,8 +189,8 @@ void FilamentManager::updateIndexMapping() {
 }
 
 bool FilamentManager::loadFromStorage() {
-    const char* json_data;
-    esp_err_t err = Instance::get().nvs_manager->get<const char*>(nvs_key, json_data);
+    const char *json_data;
+    esp_err_t err = Instance::get().nvs_manager->get<const char *>(nvs_key, json_data);
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "Loaded filaments data from storage");
         ESP_LOGI(TAG, "Filaments JSON: %s", json_data);
@@ -205,8 +202,8 @@ bool FilamentManager::loadFromStorage() {
 
 bool FilamentManager::saveToStorage() const {
     ESP_LOGI(TAG, "Saving filaments to storage");
-    const char* json_data = toJson();
-    esp_err_t err = Instance::get().nvs_manager->set<const char*>(nvs_key, json_data);
+    const char *json_data = toJson();
+    esp_err_t err = Instance::get().nvs_manager->set<const char *>(nvs_key, json_data);
     if (err == ESP_OK) {
         return Instance::get().nvs_manager->commit() == ESP_OK;
     }

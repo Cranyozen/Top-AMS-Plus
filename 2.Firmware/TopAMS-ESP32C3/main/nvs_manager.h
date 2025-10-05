@@ -1,13 +1,13 @@
 // nvs_manager.h
 #pragma once
 
-#include <nvs_flash.h>
-#include <nvs.h>
-#include <cstring>
-#include <vector>
-#include <type_traits>
-#include <iostream>
 #include "esp_log.h"
+#include <cstring>
+#include <iostream>
+#include <nvs.h>
+#include <nvs_flash.h>
+#include <type_traits>
+#include <vector>
 
 #define DEFAULT_NAMESPACE "storage"
 
@@ -16,7 +16,7 @@
 class NVSManager {
 private:
     nvs_handle_t nvs_handle;
-    const char* namespace_name;
+    const char *namespace_name;
     bool is_initialized;
 
 public:
@@ -50,7 +50,8 @@ public:
         // 打开 NVS 命名空间
         err = nvs_open(namespace_name, NVS_READWRITE, &nvs_handle);
         if (err != ESP_OK) {
-            ESP_LOGE(NVS_TAG, "NVS open failed for namespace '%s': %s", namespace_name, esp_err_to_name(err));
+            ESP_LOGE(NVS_TAG, "NVS open failed for namespace '%s': %s", namespace_name,
+                     esp_err_to_name(err));
             return err;
         }
 
@@ -66,8 +67,7 @@ public:
      * @param value 值
      * @return true 成功, false 失败
      */
-    template<typename T>
-    esp_err_t set(const char* key, const T& value) {
+    template <typename T> esp_err_t set(const char *key, const T &value) {
         if (!is_initialized) {
             ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
@@ -93,12 +93,12 @@ public:
         } else if constexpr (std::is_same_v<T, uint64_t>) {
             err = nvs_set_u64(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, float>) {
-            err = nvs_set_u32(nvs_handle, key, *reinterpret_cast<const uint32_t*>(&value));
+            err = nvs_set_u32(nvs_handle, key, *reinterpret_cast<const uint32_t *>(&value));
         } else if constexpr (std::is_same_v<T, double>) {
-            err = nvs_set_u64(nvs_handle, key, *reinterpret_cast<const uint64_t*>(&value));
+            err = nvs_set_u64(nvs_handle, key, *reinterpret_cast<const uint64_t *>(&value));
         } else if constexpr (std::is_same_v<T, std::string>) {
             err = nvs_set_str(nvs_handle, key, value.c_str());
-        } else if constexpr (std::is_same_v<T, const char*>) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
             err = nvs_set_str(nvs_handle, key, value);
         } else if constexpr (std::is_same_v<T, bool>) {
             err = nvs_set_u8(nvs_handle, key, value ? 1 : 0);
@@ -124,8 +124,7 @@ public:
      * @param value 输出值
      * @return true 成功, false 失败
      */
-    template<typename T>
-    esp_err_t get(const char* key, T& value) {
+    template <typename T> esp_err_t get(const char *key, T &value) {
         if (!is_initialized) {
             ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
@@ -154,19 +153,19 @@ public:
             uint32_t temp;
             err = nvs_get_u32(nvs_handle, key, &temp);
             if (err == ESP_OK) {
-                value = *reinterpret_cast<float*>(&temp);
+                value = *reinterpret_cast<float *>(&temp);
             }
         } else if constexpr (std::is_same_v<T, double>) {
             uint64_t temp;
             err = nvs_get_u64(nvs_handle, key, &temp);
             if (err == ESP_OK) {
-                value = *reinterpret_cast<double*>(&temp);
+                value = *reinterpret_cast<double *>(&temp);
             }
-        } else if constexpr (std::is_same_v<T, const char*>) {
+        } else if constexpr (std::is_same_v<T, const char *>) {
             size_t required_size = 0;
             err = nvs_get_str(nvs_handle, key, nullptr, &required_size);
             if (err == ESP_OK && required_size > 0) {
-                char* buffer = new char[required_size];
+                char *buffer = new char[required_size];
                 err = nvs_get_str(nvs_handle, key, buffer, &required_size);
                 if (err == ESP_OK) {
                     value = buffer; // 注意：调用者需要负责释放内存
@@ -231,7 +230,7 @@ public:
      * @param key 键名
      * @return true 成功, false 失败
      */
-    esp_err_t erase(const char* key) {
+    esp_err_t erase(const char *key) {
         if (!is_initialized) {
             ESP_LOGE(NVS_TAG, "NVS not initialized");
             return ESP_ERR_INVALID_STATE;
@@ -282,7 +281,7 @@ public:
      * @param key 键名
      * @return true 存在, false 不存在
      */
-    bool exists(const char* key) {
+    bool exists(const char *key) {
         if (!is_initialized) {
             ESP_LOGE(NVS_TAG, "NVS not initialized");
             return false;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <esp_http_server.h>
 #include <esp_event.h>
+#include <esp_http_server.h>
 #include <esp_log.h>
 
 class WSServer {
@@ -14,8 +14,8 @@ public:
     httpd_handle_t getHandle() const;
 
     // 事件处理
-    void onConnect(esp_event_base_t event_base, int32_t event_id, void* event_data);
-    void onDisconnect(esp_event_base_t event_base, int32_t event_id, void* event_data);
+    void onConnect(esp_event_base_t event_base, int32_t event_id, void *event_data);
+    void onDisconnect(esp_event_base_t event_base, int32_t event_id, void *event_data);
 
 private:
     httpd_handle_t server;

@@ -6,13 +6,13 @@
 
 /*
  * MDNS-SD Query and advertise Example
-*/
-#include <string.h>
-#include "freertos/FreeRTOS.h"
+ */
+#include "mdns_service.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 #include "mdns.h"
 #include "netdb.h"
-#include "mdns_service.h"
+#include <string.h>
 
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 1, 0)
 /* CONFIG_LWIP_IPV4 was introduced in IDF v5.1, set CONFIG_LWIP_IPV4 to 1 by default for IDF v5.0 */
@@ -22,16 +22,15 @@
 #endif // ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 1, 0)
 
 #define EXAMPLE_MDNS_INSTANCE CONFIG_MDNS_INSTANCE
-#define EXAMPLE_BUTTON_GPIO   CONFIG_MDNS_BUTTON_GPIO
+#define EXAMPLE_BUTTON_GPIO CONFIG_MDNS_BUTTON_GPIO
 
-const char* MDnsService::TAG = "[MDnsService]";
+const char *MDnsService::TAG = "[MDnsService]";
 
-MDnsService::MDnsService(const std::string& instance_name, const std::string& service_name, const std::string& proto, uint16_t port)
+MDnsService::MDnsService(const std::string &instance_name, const std::string &service_name,
+                         const std::string &proto, uint16_t port)
     : instance_name_(instance_name), service_name_(service_name), proto_(proto), port_(port) {}
 
-MDnsService::~MDnsService() {
-    mdns_free();
-}
+MDnsService::~MDnsService() { mdns_free(); }
 
 void MDnsService::init() {
     ESP_ERROR_CHECK(mdns_init());
@@ -40,6 +39,7 @@ void MDnsService::init() {
 }
 
 void MDnsService::addService() {
-    ESP_ERROR_CHECK(mdns_service_add(service_name_.c_str(), proto_.c_str(), "_tcp", port_, nullptr, 0));
+    ESP_ERROR_CHECK(
+        mdns_service_add(service_name_.c_str(), proto_.c_str(), "_tcp", port_, nullptr, 0));
     ESP_LOGI(TAG, "Service added: %s.%s.local:%d", service_name_.c_str(), proto_.c_str(), port_);
 }
