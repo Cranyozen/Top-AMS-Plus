@@ -194,17 +194,16 @@ void handle_ws_message(const char *message, std::string &response) {
         return;
     }
 
-    auto type_char = type->valuestring;
-    if (strcmp(type_char, "setting") == 0) {
-        // Handle settings actions here
+    std::string_view type_char = type->valuestring;
+    if (type_char == "setting") {
         cJSON *key = cJSON_GetObjectItem(root, "key");
         if (!cJSON_IsString(key)) {
             response = R"({"error": "Missing or invalid key"})";
             cJSON_Delete(root);
             return;
         }
-        auto key_char = key->valuestring;
-        if (strcmp(key_char, "wifi_ssid") == 0) {
+        std::string_view key_char = key->valuestring;
+        if (key_char == "wifi_ssid") {
             cJSON *value = cJSON_GetObjectItem(root, "value");
             if (cJSON_IsString(value)) {
                 // Save WiFi SSID to NVS or appropriate storage
@@ -212,7 +211,7 @@ void handle_ws_message(const char *message, std::string &response) {
             } else {
                 response = R"({"error": "Invalid value for wifi_ssid"})";
             }
-        } else if (strcmp(key_char, "wifi_password") == 0) {
+        } else if (key_char == "wifi_password") {
             cJSON *value = cJSON_GetObjectItem(root, "value");
             if (cJSON_IsString(value)) {
                 // Save WiFi password to NVS or appropriate storage
@@ -224,8 +223,7 @@ void handle_ws_message(const char *message, std::string &response) {
             response = R"({"error": "Unknown setting key"})";
         }
 
-    } else if (strcmp(type_char, "system") == 0) {
-        // 针对系统操作的处理
+    } else if (type_char == "system") {
         cJSON *action = cJSON_GetObjectItem(root, "action");
         if (!cJSON_IsString(action)) {
             response = R"({"error": "Missing or invalid action"})";
@@ -233,18 +231,17 @@ void handle_ws_message(const char *message, std::string &response) {
             return;
         }
 
-        const char *action_char = action->valuestring;
-        if (strcmp(action_char, "reboot") == 0) {
+        std::string_view action_char = action->valuestring;
+        if (action_char == "reboot") {
             response = R"({"success": true, "message": "Rebooting..."})";
             esp_restart();
-        } else if (strcmp(action_char, "reconnect_wifi") == 0) {
-            // 调用 WiFiManager 的 reconnect 方法
+        } else if (action_char == "reconnect_wifi") {
             if (Instance::get().wifi_manager->reconnect()) {
                 response = R"({"success": true, "message": "Reconnecting to WiFi..."})";
             } else {
                 response = R"({"error": "Failed to initiate WiFi reconnection"})";
             }
-        } else if (strcmp(action_char, "get_mac") == 0) {
+        } else if (action_char == "get_mac") {
             uint8_t mac[6];
             esp_read_mac(mac, ESP_MAC_WIFI_STA);
             char mac_str[18];
@@ -254,7 +251,7 @@ void handle_ws_message(const char *message, std::string &response) {
         } else {
             response = R"({"error": "Unknown action"})";
         }
-    } else if (strcmp(type_char, "filament") == 0) {
+    } else if (type_char == "filament") {
         cJSON *action = cJSON_GetObjectItem(root, "action");
         if (!cJSON_IsString(action)) {
             response = R"({"error": "Missing or invalid action"})";
@@ -262,8 +259,8 @@ void handle_ws_message(const char *message, std::string &response) {
             return;
         }
 
-        const char *action_char = action->valuestring;
-        if (strcmp(action_char, "add") == 0) {
+        std::string_view action_char = action->valuestring;
+        if (action_char == "add") {
             cJSON *motor_id = cJSON_GetObjectItem(root, "motor_id");
             cJSON *metadata = cJSON_GetObjectItem(root, "metadata");
             if (cJSON_IsNumber(motor_id) && cJSON_IsString(metadata)) {
@@ -276,7 +273,7 @@ void handle_ws_message(const char *message, std::string &response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (strcmp(action_char, "remove") == 0) {
+        } else if (action_char == "remove") {
             cJSON *id = cJSON_GetObjectItem(root, "id");
             if (cJSON_IsNumber(id)) {
                 bool success = filamentManager.removeFilament(id->valueint);
@@ -284,7 +281,7 @@ void handle_ws_message(const char *message, std::string &response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (strcmp(action_char, "update") == 0) {
+        } else if (action_char == "update") {
             cJSON *id = cJSON_GetObjectItem(root, "id");
             cJSON *motor_id = cJSON_GetObjectItem(root, "motor_id");
             cJSON *metadata = cJSON_GetObjectItem(root, "metadata");
@@ -296,7 +293,7 @@ void handle_ws_message(const char *message, std::string &response) {
             } else {
                 response = R"({"error": "Invalid parameters"})";
             }
-        } else if (strcmp(action_char, "list") == 0) {
+        } else if (action_char == "list") {
             cJSON *id = cJSON_GetObjectItem(root, "id");
             if (cJSON_IsNumber(id)) {
                 const Filament *filament = filamentManager.getFilamentById(id->valueint);
@@ -318,8 +315,6 @@ void handle_ws_message(const char *message, std::string &response) {
         } else {
             response = R"({"error": "Unknown action"})";
         }
-    } else if (false) {
-
     } else {
         response = R"({"error": "Unknown type"})";
     }

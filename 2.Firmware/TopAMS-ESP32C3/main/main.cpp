@@ -27,7 +27,7 @@ extern "C" void app_main(void) {
              Instance::get().mac_address[0], Instance::get().mac_address[1],
              Instance::get().mac_address[2], Instance::get().mac_address[3],
              Instance::get().mac_address[4], Instance::get().mac_address[5]);
-    ESP_LOGI(TAG, "Device Name: %s", Instance::get().device_name.c_str());
+    ESP_LOGI(TAG, "Device Name: %s", Instance::get().device_name);
 
     // WiFi Connect Event
     esp_event_handler_register(

@@ -1,7 +1,5 @@
-#include <string>
-
 struct BambuStatus {
-    std::string wifi_signal;
+    char wifi_signal[16];
     float nozzle_temper;
     float bed_temper;
 };

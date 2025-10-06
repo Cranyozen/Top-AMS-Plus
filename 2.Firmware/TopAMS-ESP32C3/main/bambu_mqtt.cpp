@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
+#include <string_view>
 
 #define BAMBU_MQTT_DEFAULT_USER "bblp"
 #define BAMBU_MQTT_DEFAULT_PORT 8883
@@ -26,7 +28,7 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, in
             // Subscribe to the report topic
             // topic: device/serial/report
             char topic[128];
-            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, self->serial_.c_str(),
+            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, self->serial_,
                      BAMBU_MQTT_TOPIC_REPORT);
             ESP_LOGI(TAG, "Subscribing to topic: %s", topic);
             msg_id = esp_mqtt_client_subscribe(client, topic, 1);
@@ -50,8 +52,13 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, in
                 // WARNING: 直接 Log 数据可能导致数据泄漏，日志过长，刷新过快等问题
                 ESP_LOGI(TAG, "Data: %.*s", event->data_len, event->data);
                 if (event->topic_len > 0) {
-                    std::string topic(event->topic, event->topic_len);
-                    std::string payload(event->data, event->data_len);
+                    std::string_view topic(event->topic, event->topic_len);
+                    std::string_view data(event->data, event->data_len);
+                    // ESP_LOGI(TAG, "Topic: %.*s", (int)topic.size(), topic.data());
+                    // ESP_LOGI(TAG, "Data: %.*s", (int)data.size(), data.data());
+                    if (self->info_cb_) {
+                        self->info_cb_(topic.data(), data.data());
+                    }
                 }
 
                 // Try to parser data
@@ -86,8 +93,8 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, in
                             self->status_.bed_temper = bed_temper->valuedouble;
                         }
                         if (wifi_signal) {
-                            self->status_.wifi_signal =
-                                wifi_signal->valuestring ? wifi_signal->valuestring : "";
+                            snprintf(self->status_.wifi_signal, sizeof(self->status_.wifi_signal),
+                                     "%s", wifi_signal->valuestring);
                         }
                         // ESP_LOGI(TAG, "Nozzle Temperature: %.2f", self->status_.nozzle_temper);
                         // ESP_LOGI(TAG, "Bed Temperature: %.2f", self->status_.bed_temper);
@@ -117,19 +124,18 @@ void BambuMQTT::mqtt_event_handler(void *handler_args, esp_event_base_t base, in
     }
 }
 
-BambuMQTT::BambuMQTT(const std::string &ip, const std::string &password, const std::string &serial,
+BambuMQTT::BambuMQTT(const char *ip, const char *password, const char *serial,
                      const BambuStatus &status, InfoCallback cb)
     : client_(nullptr), ip_(ip), serial_(serial), password_(password), info_cb_(cb),
       status_(status) {
-    ESP_LOGI(TAG, "BambuMQTT constructed: ip=%s, serial=%s, password=%s", ip.c_str(),
-             serial.c_str(), password.c_str());
+    ESP_LOGI(TAG, "BambuMQTT constructed: ip=%s, serial=%s, password=%s", ip_, serial_, password_);
 }
 
 BambuMQTT::~BambuMQTT() { stop(); }
 
 void BambuMQTT::start() {
     char broker_uri[128];
-    snprintf(broker_uri, sizeof(broker_uri), "mqtts://%s:%d", ip_.c_str(), BAMBU_MQTT_DEFAULT_PORT);
+    snprintf(broker_uri, sizeof(broker_uri), "mqtts://%s:%d", ip_, BAMBU_MQTT_DEFAULT_PORT);
 
     esp_mqtt_client_config_t mqtt_cfg = {};
     mqtt_cfg.broker.address.uri = broker_uri;
@@ -137,7 +143,7 @@ void BambuMQTT::start() {
     mqtt_cfg.broker.verification.certificate = nullptr; // 不验证证书
     // 证书问题似乎需要修改 sdkconfig 才能彻底解决，或内置证书验证
     mqtt_cfg.credentials.username = BAMBU_MQTT_DEFAULT_USER;
-    mqtt_cfg.credentials.authentication.password = password_.c_str();
+    mqtt_cfg.credentials.authentication.password = password_;
     mqtt_cfg.session.keepalive = 120;
 
     // 关键优化配置
@@ -149,7 +155,7 @@ void BambuMQTT::start() {
     mqtt_cfg.task.priority = 5;                   // 提高任务优先级
 
     // WARNING: 直接 Log 数据可能导致关键隐私数据泄漏
-    ESP_LOGI(TAG, "Connecting to MQTT broker at %s, pwd %s", broker_uri, password_.c_str());
+    ESP_LOGI(TAG, "Connecting to MQTT broker at %s, pwd %s", broker_uri, password_);
 
     client_ = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID,
@@ -167,21 +173,23 @@ void BambuMQTT::stop() {
     }
 }
 
-int BambuMQTT::publish_message(const std::string &message) {
+int BambuMQTT::publish_message(const char *message) {
     if (!client_) {
         ESP_LOGE(TAG, "MQTT client not initialized");
         return -1;
     }
-
-    std::string topic = std::string(BAMBU_MQTT_TOPIC_BASE) + "/" + serial_ + "/" +
-                        std::string(BAMBU_MQTT_TOPIC_REPORT);
-    int msg_id = esp_mqtt_client_publish(client_, topic.c_str(), message.c_str(), 0, 1, 0);
+    char topic[128];
+    snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, serial_,
+             BAMBU_MQTT_TOPIC_REQUEST);
+    ESP_LOGI(TAG, "Publishing message to topic: %s", topic);
+    ESP_LOGI(TAG, "Message: %s", message);
+    int msg_id = esp_mqtt_client_publish(client_, topic, message, 0, 1, 0);
 
     if (msg_id < 0) {
-        ESP_LOGE(TAG, "Failed to publish message: %s", message.c_str());
+        ESP_LOGE(TAG, "Failed to publish message: %s", message);
         return -1;
     }
 
-    ESP_LOGI(TAG, "Message published successfully: %s", message.c_str());
+    ESP_LOGI(TAG, "Message published successfully: %s", message);
     return msg_id;
 }

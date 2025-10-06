@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mqtt_client.h"
-#include <string>
 
 #include "model/bambu_status.h"
 
@@ -22,27 +21,27 @@ class BambuMQTT {
 public:
     using InfoCallback = void (*)(const char *topic, const char *payload);
 
-    BambuMQTT(const std::string &ip, const std::string &password, const std::string &serial,
-              const BambuStatus &status, InfoCallback cb);
+    BambuMQTT(const char *ip, const char *password, const char *serial, const BambuStatus &status,
+              InfoCallback cb);
     ~BambuMQTT();
 
     void start();
     void stop();
 
-    int publish_message(const std::string &message);
+    int publish_message(const char *message);
 
     esp_mqtt_client_handle_t getClient() const { return client_; }
-    std::string getIP() const { return ip_; }
-    std::string getSerial() const { return serial_; }
-    std::string getPassword() const { return password_; }
+    const char *getIP() const { return ip_; }
+    const char *getSerial() const { return serial_; }
+    const char *getPassword() const { return password_; }
 
     bool isConnected() const { return client_ != nullptr; }
 
 private:
     esp_mqtt_client_handle_t client_;
-    std::string ip_;
-    std::string serial_;
-    std::string password_;
+    const char *ip_;
+    const char *serial_;
+    const char *password_;
     InfoCallback info_cb_;
 
     BambuStatus status_;

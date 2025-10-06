@@ -13,10 +13,8 @@ Instance::Instance() {
     esp_efuse_mac_get_default(mac_address);
 
     // set device name based on MAC address
-    char name[32];
-    snprintf(name, sizeof(name), "TopAMS-%02X%02X%02X", mac_address[3], mac_address[4],
-             mac_address[5]);
-    device_name = std::string(name);
+    snprintf(device_name, sizeof(device_name), "TopAMS-%02X%02X%02X", mac_address[3],
+             mac_address[4], mac_address[5]);
 
     mdns_service = std::make_shared<MDnsService>(device_name, "TopAMS", "_http", 80);
 }

@@ -26,20 +26,19 @@
 
 const char *MDnsService::TAG = "[MDnsService]";
 
-MDnsService::MDnsService(const std::string &instance_name, const std::string &service_name,
-                         const std::string &proto, uint16_t port)
+MDnsService::MDnsService(const char *instance_name, const char *service_name, const char *proto,
+                         uint16_t port)
     : instance_name_(instance_name), service_name_(service_name), proto_(proto), port_(port) {}
 
 MDnsService::~MDnsService() { mdns_free(); }
 
 void MDnsService::init() {
     ESP_ERROR_CHECK(mdns_init());
-    ESP_ERROR_CHECK(mdns_hostname_set(instance_name_.c_str()));
-    ESP_LOGI(TAG, "mDNS initialized with instance name: %s", instance_name_.c_str());
+    ESP_ERROR_CHECK(mdns_hostname_set(instance_name_));
+    ESP_LOGI(TAG, "mDNS initialized with instance name: %s", instance_name_);
 }
 
 void MDnsService::addService() {
-    ESP_ERROR_CHECK(
-        mdns_service_add(service_name_.c_str(), proto_.c_str(), "_tcp", port_, nullptr, 0));
-    ESP_LOGI(TAG, "Service added: %s.%s.local:%d", service_name_.c_str(), proto_.c_str(), port_);
+    ESP_ERROR_CHECK(mdns_service_add(service_name_, proto_, "_tcp", port_, nullptr, 0));
+    ESP_LOGI(TAG, "Service added: %s.%s.local:%d", service_name_, proto_, port_);
 }

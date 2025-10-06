@@ -30,7 +30,7 @@ public:
     // MAC Address
     uint8_t mac_address[6];
 
-    std::string device_name;
+    char device_name[32];
 
     // 禁止拷贝
     Instance(const Instance &) = delete;
