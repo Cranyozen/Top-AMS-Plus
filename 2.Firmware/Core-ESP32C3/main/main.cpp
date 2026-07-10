@@ -3,6 +3,7 @@
 #include "esp_err.h"
 #include "network/wifi.hpp"
 #include "nvs/nvs.hpp"
+#include "network/smartconfig.hpp"
 
 static const char *TAG = "main";
 
@@ -17,4 +18,9 @@ extern "C" void app_main(void)
     }
 
     Wifi_Init();
+    SC_Init();
+
+    Wifi_SetMode(WIFI_MODE_STA);
+
+    Wifi_Start();
 }
