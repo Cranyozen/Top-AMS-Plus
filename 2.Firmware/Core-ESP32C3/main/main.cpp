@@ -4,8 +4,10 @@
 #include "network/wifi.hpp"
 #include "nvs/nvs.hpp"
 #include "network/smartconfig.hpp"
+#include "network/bambu_mqtt.hpp"
 
 static const char *TAG = "main";
+static BambuMQTT_context_t mqtt_context;
 
 extern "C" void app_main(void)
 {
@@ -17,10 +19,13 @@ extern "C" void app_main(void)
         return;
     }
 
+    BambuMQTT_init(&mqtt_context, "192.168.1.199", "56154859", "03919D530105226");
+
     Wifi_Init();
     SC_Init();
 
     Wifi_SetMode(WIFI_MODE_STA);
 
     Wifi_Start();
+    BambuMQTT_start(&mqtt_context);
 }
