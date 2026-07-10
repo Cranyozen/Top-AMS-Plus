@@ -1,28 +1,13 @@
-/*
- * SPDX-FileCopyrightText: 2025 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
-/* Non-Volatile Storage (NVS) Read and Write a Value - Example
-
-   For other examples please check:
-   https://github.com/espressif/esp-idf/tree/master/examples
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <stdio.h>
-#include <inttypes.h>
+// #include <inttypes.h>
 #include <string>
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_system.h"
+// #include "freertos/task.h"
+// #include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "nvs.h"
+
 #include "nvs.hpp"
 
 #include <string.h>
@@ -65,7 +50,7 @@ static const char *type_to_str(nvs_type_t type)
 }
 
 
-esp_err_t Nvs_Init(nvs_context_t *context)
+esp_err_t Nvs_init(nvs_context_t *context)
 {
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
@@ -89,7 +74,7 @@ esp_err_t Nvs_Init(nvs_context_t *context)
 }
 
 
-esp_err_t Nvs_Close(nvs_context_t *context)
+esp_err_t Nvs_close(nvs_context_t *context)
 {
     nvs_close(context->handle);
     ESP_LOGI(TAG, "NVS handle closed.");
@@ -99,10 +84,10 @@ esp_err_t Nvs_Close(nvs_context_t *context)
 
 // Template specialization declarations for NVS get operations
 template<typename T>
-esp_err_t Nvs_Get(nvs_context_t *context, const char *key, T &value);
+esp_err_t Nvs_get(nvs_context_t *context, const char *key, T &value);
 
 template<>
-esp_err_t Nvs_Get<int8_t>(nvs_context_t *context, const char *key, int8_t &value)
+esp_err_t Nvs_get<int8_t>(nvs_context_t *context, const char *key, int8_t &value)
 {
     esp_err_t err = nvs_get_i8(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -112,7 +97,7 @@ esp_err_t Nvs_Get<int8_t>(nvs_context_t *context, const char *key, int8_t &value
 }
 
 template<>
-esp_err_t Nvs_Get<uint8_t>(nvs_context_t *context, const char *key, uint8_t &value)
+esp_err_t Nvs_get<uint8_t>(nvs_context_t *context, const char *key, uint8_t &value)
 {
     esp_err_t err = nvs_get_u8(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -122,7 +107,7 @@ esp_err_t Nvs_Get<uint8_t>(nvs_context_t *context, const char *key, uint8_t &val
 }
 
 template<>
-esp_err_t Nvs_Get<int16_t>(nvs_context_t *context, const char *key, int16_t &value)
+esp_err_t Nvs_get<int16_t>(nvs_context_t *context, const char *key, int16_t &value)
 {
     esp_err_t err = nvs_get_i16(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -132,7 +117,7 @@ esp_err_t Nvs_Get<int16_t>(nvs_context_t *context, const char *key, int16_t &val
 }
 
 template<>
-esp_err_t Nvs_Get<uint16_t>(nvs_context_t *context, const char *key, uint16_t &value)
+esp_err_t Nvs_get<uint16_t>(nvs_context_t *context, const char *key, uint16_t &value)
 {
     esp_err_t err = nvs_get_u16(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -142,7 +127,7 @@ esp_err_t Nvs_Get<uint16_t>(nvs_context_t *context, const char *key, uint16_t &v
 }
 
 template<>
-esp_err_t Nvs_Get<int32_t>(nvs_context_t *context, const char *key, int32_t &value)
+esp_err_t Nvs_get<int32_t>(nvs_context_t *context, const char *key, int32_t &value)
 {
     esp_err_t err = nvs_get_i32(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -152,7 +137,7 @@ esp_err_t Nvs_Get<int32_t>(nvs_context_t *context, const char *key, int32_t &val
 }
 
 template<>
-esp_err_t Nvs_Get<uint32_t>(nvs_context_t *context, const char *key, uint32_t &value)
+esp_err_t Nvs_get<uint32_t>(nvs_context_t *context, const char *key, uint32_t &value)
 {
     esp_err_t err = nvs_get_u32(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -162,7 +147,7 @@ esp_err_t Nvs_Get<uint32_t>(nvs_context_t *context, const char *key, uint32_t &v
 }
 
 template<>
-esp_err_t Nvs_Get<int64_t>(nvs_context_t *context, const char *key, int64_t &value)
+esp_err_t Nvs_get<int64_t>(nvs_context_t *context, const char *key, int64_t &value)
 {
     esp_err_t err = nvs_get_i64(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -172,7 +157,7 @@ esp_err_t Nvs_Get<int64_t>(nvs_context_t *context, const char *key, int64_t &val
 }
 
 template<>
-esp_err_t Nvs_Get<uint64_t>(nvs_context_t *context, const char *key, uint64_t &value)
+esp_err_t Nvs_get<uint64_t>(nvs_context_t *context, const char *key, uint64_t &value)
 {
     esp_err_t err = nvs_get_u64(context->handle, key, &value);
     if (err != ESP_OK) {
@@ -182,7 +167,7 @@ esp_err_t Nvs_Get<uint64_t>(nvs_context_t *context, const char *key, uint64_t &v
 }
 
 template<>
-esp_err_t Nvs_Get<std::string>(nvs_context_t *context, const char *key, std::string &value)
+esp_err_t Nvs_get<std::string>(nvs_context_t *context, const char *key, std::string &value)
 {
     size_t required_size = 0;
     esp_err_t err = nvs_get_str(context->handle, key, NULL, &required_size);
@@ -199,7 +184,7 @@ esp_err_t Nvs_Get<std::string>(nvs_context_t *context, const char *key, std::str
 }
 
 // Read fixed-length char array (blob) from NVS
-esp_err_t Nvs_GetBlob(nvs_context_t *context, const char *key, char *buf, size_t len)
+esp_err_t Nvs_get_blob(nvs_context_t *context, const char *key, char *buf, size_t len)
 {
     size_t read_len = len;
     esp_err_t err = nvs_get_blob(context->handle, key, buf, &read_len);
@@ -212,10 +197,10 @@ esp_err_t Nvs_GetBlob(nvs_context_t *context, const char *key, char *buf, size_t
 
 // Template specialization declarations for NVS set operations
 template<typename T>
-esp_err_t Nvs_Set(nvs_context_t *context, const char *key, const T &value);
+esp_err_t Nvs_set(nvs_context_t *context, const char *key, const T &value);
 
 template<>
-esp_err_t Nvs_Set<int8_t>(nvs_context_t *context, const char *key, const int8_t &value)
+esp_err_t Nvs_set<int8_t>(nvs_context_t *context, const char *key, const int8_t &value)
 {
     esp_err_t err = nvs_set_i8(context->handle, key, value);
     if (err != ESP_OK) {
@@ -225,7 +210,7 @@ esp_err_t Nvs_Set<int8_t>(nvs_context_t *context, const char *key, const int8_t 
 }
 
 template<>
-esp_err_t Nvs_Set<uint8_t>(nvs_context_t *context, const char *key, const uint8_t &value)
+esp_err_t Nvs_set<uint8_t>(nvs_context_t *context, const char *key, const uint8_t &value)
 {
     esp_err_t err = nvs_set_u8(context->handle, key, value);
     if (err != ESP_OK) {
@@ -235,7 +220,7 @@ esp_err_t Nvs_Set<uint8_t>(nvs_context_t *context, const char *key, const uint8_
 }
 
 template<>
-esp_err_t Nvs_Set<int16_t>(nvs_context_t *context, const char *key, const int16_t &value)
+esp_err_t Nvs_set<int16_t>(nvs_context_t *context, const char *key, const int16_t &value)
 {
     esp_err_t err = nvs_set_i16(context->handle, key, value);
     if (err != ESP_OK) {
@@ -245,7 +230,7 @@ esp_err_t Nvs_Set<int16_t>(nvs_context_t *context, const char *key, const int16_
 }
 
 template<>
-esp_err_t Nvs_Set<uint16_t>(nvs_context_t *context, const char *key, const uint16_t &value)
+esp_err_t Nvs_set<uint16_t>(nvs_context_t *context, const char *key, const uint16_t &value)
 {
     esp_err_t err = nvs_set_u16(context->handle, key, value);
     if (err != ESP_OK) {
@@ -255,7 +240,7 @@ esp_err_t Nvs_Set<uint16_t>(nvs_context_t *context, const char *key, const uint1
 }
 
 template<>
-esp_err_t Nvs_Set<int32_t>(nvs_context_t *context, const char *key, const int32_t &value)
+esp_err_t Nvs_set<int32_t>(nvs_context_t *context, const char *key, const int32_t &value)
 {
     esp_err_t err = nvs_set_i32(context->handle, key, value);
     if (err != ESP_OK) {
@@ -265,7 +250,7 @@ esp_err_t Nvs_Set<int32_t>(nvs_context_t *context, const char *key, const int32_
 }
 
 template<>
-esp_err_t Nvs_Set<uint32_t>(nvs_context_t *context, const char *key, const uint32_t &value)
+esp_err_t Nvs_set<uint32_t>(nvs_context_t *context, const char *key, const uint32_t &value)
 {
     esp_err_t err = nvs_set_u32(context->handle, key, value);
     if (err != ESP_OK) {
@@ -275,7 +260,7 @@ esp_err_t Nvs_Set<uint32_t>(nvs_context_t *context, const char *key, const uint3
 }
 
 template<>
-esp_err_t Nvs_Set<int64_t>(nvs_context_t *context, const char *key, const int64_t &value)
+esp_err_t Nvs_set<int64_t>(nvs_context_t *context, const char *key, const int64_t &value)
 {
     esp_err_t err = nvs_set_i64(context->handle, key, value);
     if (err != ESP_OK) {
@@ -285,7 +270,7 @@ esp_err_t Nvs_Set<int64_t>(nvs_context_t *context, const char *key, const int64_
 }
 
 template<>
-esp_err_t Nvs_Set<uint64_t>(nvs_context_t *context, const char *key, const uint64_t &value)
+esp_err_t Nvs_set<uint64_t>(nvs_context_t *context, const char *key, const uint64_t &value)
 {
     esp_err_t err = nvs_set_u64(context->handle, key, value);
     if (err != ESP_OK) {
@@ -295,7 +280,7 @@ esp_err_t Nvs_Set<uint64_t>(nvs_context_t *context, const char *key, const uint6
 }
 
 template<>
-esp_err_t Nvs_Set<std::string>(nvs_context_t *context, const char *key, const std::string &value)
+esp_err_t Nvs_set<std::string>(nvs_context_t *context, const char *key, const std::string &value)
 {
     esp_err_t err = nvs_set_str(context->handle, key, value.c_str());
     if (err != ESP_OK) {
@@ -305,7 +290,7 @@ esp_err_t Nvs_Set<std::string>(nvs_context_t *context, const char *key, const st
 }
 
 // Write fixed-length char array (blob) to NVS
-esp_err_t Nvs_SetBlob(nvs_context_t *context, const char *key, const char *buf, size_t len)
+esp_err_t Nvs_set_blob(nvs_context_t *context, const char *key, const char *buf, size_t len)
 {
     esp_err_t err = nvs_set_blob(context->handle, key, buf, len);
     if (err != ESP_OK) {
@@ -314,7 +299,7 @@ esp_err_t Nvs_SetBlob(nvs_context_t *context, const char *key, const char *buf, 
     return err;
 }
 
-esp_err_t Nvs_Commit(nvs_context_t *context)
+esp_err_t Nvs_commit(nvs_context_t *context)
 {
     esp_err_t err = nvs_commit(context->handle);
     if (err != ESP_OK) {
@@ -322,106 +307,3 @@ esp_err_t Nvs_Commit(nvs_context_t *context)
     }
     return err;
 }
-
-
-// void app_main(void)
-// {
-//     // Initialize NVS
-//     esp_err_t err = nvs_flash_init();
-//     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-//         // NVS partition was truncated and needs to be erased
-//         // Retry nvs_flash_init
-//         ESP_ERROR_CHECK(nvs_flash_erase());
-//         err = nvs_flash_init();
-//     }
-//     ESP_ERROR_CHECK(err);
-
-//     // Open NVS handle
-//     ESP_LOGI(TAG, "\nOpening Non-Volatile Storage (NVS) handle...");
-//     nvs_handle_t my_handle;
-//     err = nvs_open("storage", NVS_READWRITE, &my_handle);
-//     if (err != ESP_OK) {
-//         ESP_LOGE(TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
-//         return;
-//     }
-
-//     // Store and read an integer value
-//     int32_t counter = 42;
-//     ESP_LOGI(TAG, "\nWriting counter to NVS...");
-//     err = nvs_set_i32(my_handle, "counter", counter);
-//     if (err != ESP_OK) {
-//         ESP_LOGE(TAG, "Failed to write counter!");
-//     }
-
-//     // Read back the value
-//     int32_t read_counter = 0;
-//     ESP_LOGI(TAG, "\nReading counter from NVS...");
-//     err = nvs_get_i32(my_handle, "counter", &read_counter);
-//     switch (err) {
-//         case ESP_OK:
-//             ESP_LOGI(TAG, "Read counter = %" PRIu32, read_counter);
-//             break;
-//         case ESP_ERR_NVS_NOT_FOUND:
-//             ESP_LOGW(TAG, "The value is not initialized yet!");
-//             break;
-//         default:
-//             ESP_LOGE(TAG, "Error (%s) reading!", esp_err_to_name(err));
-//     }
-
-//     // Store and read a string
-//     ESP_LOGI(TAG, "\nWriting string to NVS...");
-//     err = nvs_set_str(my_handle, "message", "Hello from NVS!");
-//     if (err != ESP_OK) {
-//         ESP_LOGE(TAG, "Failed to write string!");
-//     }
-
-//     // Read back the string
-//     size_t required_size = 0;
-//     ESP_LOGI(TAG, "\nReading string from NVS...");
-//     err = nvs_get_str(my_handle, "message", NULL, &required_size);
-//     if (err == ESP_OK) {
-//         char* message = malloc(required_size);
-//         err = nvs_get_str(my_handle, "message", message, &required_size);
-//         if (err == ESP_OK) {
-//             ESP_LOGI(TAG, "Read string: %s", message);
-//         }
-//         free(message);
-//     }
-
-//     // Find keys in NVS
-//     ESP_LOGI(TAG, "\nFinding keys in NVS...");
-//     nvs_iterator_t it = NULL;
-//     esp_err_t res = nvs_entry_find("nvs", "storage", NVS_TYPE_ANY, &it);
-//     while(res == ESP_OK) {
-//         nvs_entry_info_t info;
-//         nvs_entry_info(it, &info);
-//         const char *type_str =  type_to_str(info.type);
-//         ESP_LOGI(TAG, "Key: '%s', Type: %s", info.key, type_str);
-//         res = nvs_entry_next(&it);
-//     }
-//     nvs_release_iterator(it);
-
-//     // Delete a key from NVS
-//     ESP_LOGI(TAG, "\nDeleting key from NVS...");
-//     err = nvs_erase_key(my_handle, "counter");
-//     if (err != ESP_OK) {
-//         ESP_LOGE(TAG, "Failed to erase key!");
-//     }
-
-//     // Commit changes
-//     // After setting any values, nvs_commit() must be called to ensure changes are written
-//     // to flash storage. Implementations may write to storage at other times,
-//     // but this is not guaranteed.
-//     ESP_LOGI(TAG, "\nCommitting updates in NVS...");
-//     err = nvs_commit(my_handle);
-//     if (err != ESP_OK) {
-//         ESP_LOGE(TAG, "Failed to commit NVS changes!");
-//     }
-
-//     // Close
-//     nvs_close(my_handle);
-//     ESP_LOGI(TAG, "NVS handle closed.");
-
-//     ESP_LOGI(TAG, "Returned to app_main");
-
-// }

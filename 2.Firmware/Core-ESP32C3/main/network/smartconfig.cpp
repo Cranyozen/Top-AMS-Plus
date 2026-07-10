@@ -1,26 +1,11 @@
-/* Esptouch example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
-#include <string.h>
-#include <stdlib.h>
+// #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+// #include "freertos/task.h"
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
-// #include "esp_eap_client.h"
-#include "esp_event.h"
+// #include "esp_event.h"
 #include "esp_log.h"
-// #include "esp_system.h"
-#include "nvs_flash.h"
-#include "esp_netif.h"
 #include "esp_smartconfig.h"
-// #include "esp_mac.h"
 
 #include "smartconfig.hpp"
 
@@ -92,7 +77,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-void SC_Init(void)
+void SC_init(void)
 {
     // ESP_ERROR_CHECK(esp_netif_init());
     s_wifi_event_group = xEventGroupCreate();
@@ -134,9 +119,3 @@ static void SC_Example_Task(void * parm)
         }
     }
 }
-
-// void app_main(void)
-// {
-//     ESP_ERROR_CHECK( nvs_flash_init() );
-//     initialise_wifi();
-// }

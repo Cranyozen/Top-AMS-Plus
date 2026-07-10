@@ -1,8 +1,5 @@
 #include "esp_log.h"
-#include "mqtt_client.h"
-#include <cstdio>
-#include <stdint.h>
-#include <stdlib.h>
+// #include "mqtt_client.h"
 
 #include "bambu_mqtt.hpp"
 
@@ -62,7 +59,7 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
     }
 }
 
-void BambuMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial) {
+void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial) {
     ctx->client_ = nullptr;
     ctx->status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
     strncpy(ctx->ip_, ip, sizeof(ctx->ip_) - 1);
@@ -101,12 +98,12 @@ void BambuMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *passwo
                                    mqtt_event_handler, ctx);
 }
 
-void BambuMQTT_start(BambuMQTT_context_t *ctx) {
+void BMQTT_start(BambuMQTT_context_t *ctx) {
     esp_mqtt_client_start(ctx->client_);
     ESP_LOGI(TAG, "BambuMQTT client started");
 }
 
-void BambuMQTT_stop(BambuMQTT_context_t *ctx) {
+void BMQTT_stop(BambuMQTT_context_t *ctx) {
     if (ctx->client_) {
         esp_mqtt_client_stop(ctx->client_);
         esp_mqtt_client_destroy(ctx->client_);
@@ -115,7 +112,7 @@ void BambuMQTT_stop(BambuMQTT_context_t *ctx) {
     }
 }
 
-int BambuMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message) {
+int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message) {
     if (!ctx->client_) {
         ESP_LOGE(TAG, "MQTT client not initialized");
         return -1;

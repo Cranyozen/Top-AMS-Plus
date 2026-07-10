@@ -1,28 +1,10 @@
-/*
- * SPDX-FileCopyrightText: 2025 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
-/* WiFi example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
+// #include "freertos/FreeRTOS.h"
+// #include "freertos/task.h"
+// #include "freertos/event_groups.h"
 #include "esp_wifi.h"
-#include "esp_event.h"
+// #include "esp_event.h"
 #include "esp_log.h"
-#include "nvs_flash.h"
-
-// #include "lwip/err.h"
-// #include "lwip/sys.h"
 
 #include "wifi.hpp"
 
@@ -73,7 +55,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-void Wifi_Init(void)
+void Wifi_init(void)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -121,27 +103,14 @@ void Wifi_Init(void)
     // }
 }
 
-void Wifi_SetMode(wifi_mode_t mode)
+void Wifi_set_mode(wifi_mode_t mode)
 {
     ESP_ERROR_CHECK(esp_wifi_set_mode(mode));
     ESP_LOGI(TAG, "WiFi mode set to %s", (mode == WIFI_MODE_STA) ? "STA" : (mode == WIFI_MODE_AP) ? "AP" : "STA+AP");
 }
 
-void Wifi_Start()
+void Wifi_start()
 {
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_LOGI(TAG, "wifi started.");
 }
-
-// void app_main(void)
-// {
-//     //Initialize NVS
-//     esp_err_t ret = nvs_flash_init();
-//     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-//       ESP_ERROR_CHECK(nvs_flash_erase());
-//       ret = nvs_flash_init();
-//     }
-//     ESP_ERROR_CHECK(ret);
-
-//     Wifi_Init();
-// }

@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-void SC_Init(void);
+void SC_init(void);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@ typedef struct {
 } BambuMQTT_context_t;
 
 
-void BambuMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial);
-void BambuMQTT_start(BambuMQTT_context_t *ctx);
-void BambuMQTT_stop(BambuMQTT_context_t *ctx);
-int BambuMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message);
+void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial);
+void BMQTT_start(BambuMQTT_context_t *ctx);
+void BMQTT_stop(BambuMQTT_context_t *ctx);
+int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message);
