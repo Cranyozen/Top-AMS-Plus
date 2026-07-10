@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-static const char *TAG = "nvs";
+static const char *TAG = "[NVS]";
 
 // static const char *NVS_NAMESPACE = "storage";
 
