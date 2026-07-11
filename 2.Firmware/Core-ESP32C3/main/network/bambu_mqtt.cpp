@@ -1,13 +1,14 @@
 #include "esp_log.h"
+#include "esp_netif_types.h"
+#include "esp_event.h"
 // #include "mqtt_client.h"
 
 #include "bambu_mqtt.hpp"
 
-
 static const char *TAG = "[MQTT]";
 
-void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id,
-                                   void *event_data) {
+void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
     ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
@@ -21,13 +22,11 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
             // Subscribe to the report topic
             // topic: device/serial/report
             char topic[128];
-            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, ctx->serial_,
-                     BAMBU_MQTT_TOPIC_REPORT);
+            snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, ctx->serial_, BAMBU_MQTT_TOPIC_REPORT);
             ESP_LOGI(TAG, "Subscribing to topic: %s", topic);
             msg_id = esp_mqtt_client_subscribe(client, topic, 1);
             if (msg_id < 0) {
-                ESP_LOGE(TAG, "Failed to subscribe to topic: %s",
-                         BAMBU_MQTT_TOPIC_BASE "/" BAMBU_MQTT_TOPIC_REPORT);
+                ESP_LOGE(TAG, "Failed to subscribe to topic: %s", BAMBU_MQTT_TOPIC_BASE "/" BAMBU_MQTT_TOPIC_REPORT);
             } else {
                 ESP_LOGI(TAG, "Subscribed to topic successfully, msg_id=%d", msg_id);
             }
@@ -55,11 +54,21 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
         default:
             ESP_LOGI(TAG, "Other event id:%d", event->event_id);
             break;
-        
     }
 }
 
-void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial) {
+void wifi_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    ESP_LOGD(TAG, "WiFi Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
+    if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ESP_LOGI(TAG, "WiFi connected, start MQTT client...");
+        BambuMQTT_context_t *ctx = (BambuMQTT_context_t *)handler_args;
+        esp_mqtt_client_start(ctx->client_);
+    }
+}
+
+void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial)
+{
     ctx->client_ = nullptr;
     ctx->status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
     strncpy(ctx->ip_, ip, sizeof(ctx->ip_) - 1);
@@ -94,16 +103,16 @@ void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, 
     ESP_LOGI(TAG, "Connecting to MQTT broker at %s, pwd %s", broker_uri, ctx->password_);
 
     ctx->client_ = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(ctx->client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID,
-                                   mqtt_event_handler, ctx);
+    esp_mqtt_client_register_event(ctx->client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, ctx);
 }
 
-void BMQTT_start(BambuMQTT_context_t *ctx) {
-    esp_mqtt_client_start(ctx->client_);
-    ESP_LOGI(TAG, "BambuMQTT client started");
+void BMQTT_start(BambuMQTT_context_t *ctx)
+{
+    esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, ctx);
 }
 
-void BMQTT_stop(BambuMQTT_context_t *ctx) {
+void BMQTT_stop(BambuMQTT_context_t *ctx)
+{
     if (ctx->client_) {
         esp_mqtt_client_stop(ctx->client_);
         esp_mqtt_client_destroy(ctx->client_);
@@ -112,14 +121,14 @@ void BMQTT_stop(BambuMQTT_context_t *ctx) {
     }
 }
 
-int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message) {
+int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message)
+{
     if (!ctx->client_) {
         ESP_LOGE(TAG, "MQTT client not initialized");
         return -1;
     }
     char topic[128];
-    snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, ctx->serial_,
-             BAMBU_MQTT_TOPIC_REQUEST);
+    snprintf(topic, sizeof(topic), "%s/%s/%s", BAMBU_MQTT_TOPIC_BASE, ctx->serial_, BAMBU_MQTT_TOPIC_REQUEST);
     ESP_LOGI(TAG, "Publishing message to topic: %s", topic);
     ESP_LOGI(TAG, "Message: %s", message);
     int msg_id = esp_mqtt_client_publish(ctx->client_, topic, message, 0, 1, 0);
