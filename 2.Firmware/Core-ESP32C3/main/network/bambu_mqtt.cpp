@@ -2,6 +2,7 @@
 #include "esp_netif_types.h"
 #include "esp_event.h"
 // #include "mqtt_client.h"
+#include "mjson.h"
 
 #include "bambu_mqtt.hpp"
 
@@ -17,7 +18,7 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
     ctx->mqtt_status_ = BAMBU_MQTT_STATUS_CONNECTED;
     switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
-            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+            ESP_LOGI(TAG, "MQTT connected");
 
             // Subscribe to the report topic
             // topic: device/serial/report
@@ -32,23 +33,38 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
             }
             break;
         case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            ESP_LOGI(TAG, "MQTT disconnected");
             ctx->mqtt_status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
             break;
         case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-            // printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            // printf("DATA=%.*s\r\n", event->data_len, event->data);
-            ESP_LOGI(TAG, "Received data on topic: %.*s", event->topic_len, event->topic);
+            ESP_LOGD(TAG, "Received data on topic: %.*s", event->topic_len, event->topic);
             if (event->data_len > 0) {
-                ESP_LOGI(TAG, "Data: %.*s", event->data_len, event->data);
+                ESP_LOGD(TAG, "Data: %.*s", event->data_len, event->data);
+                // {"print":{"nozzle_temper":25.90625,"command":"push_status","msg":1,"sequence_id":"18728"}}
+                // Parse JSON data
+                double nozzle_temper = 0.0;
+                if (mjson_get_number(event->data, event->data_len, "$.print.nozzle_temper", &nozzle_temper)) {
+                    ctx->bambu_status_.nozzle_temper = nozzle_temper;
+                }
+                double bed_temper = 0.0;
+                if (mjson_get_number(event->data, event->data_len, "$.print.bed_temper", &bed_temper)) {
+                    ctx->bambu_status_.bed_temper = bed_temper;
+                }
+                char wifi_signal[16] = { 0 };
+                if (mjson_get_string(event->data, event->data_len, "$.print.wifi_signal", wifi_signal, sizeof(wifi_signal))) {
+                    strncpy(ctx->bambu_status_.wifi_signal, wifi_signal, sizeof(ctx->bambu_status_.wifi_signal) - 1);
+                    ctx->bambu_status_.wifi_signal[sizeof(ctx->bambu_status_.wifi_signal) - 1] = '\0';
+                }
+                ESP_LOGV(TAG, "Parsed Bambu Status: nozzle_temper=%.2f, bed_temper=%.2f, wifi_signal=%s", ctx->bambu_status_.nozzle_temper,
+                    ctx->bambu_status_.bed_temper, ctx->bambu_status_.wifi_signal);
+                // You can add more parsing logic here as needed
 
             } else {
                 ESP_LOGI(TAG, "No data received");
             }
             break;
         case MQTT_EVENT_ERROR:
-            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            ESP_LOGI(TAG, "MQTT error");
             ctx->mqtt_status_ = BAMBU_MQTT_STATUS_ERROR;
             break;
         default:
@@ -77,6 +93,8 @@ void BMQTT_init(bambu_mqtt_context_t *ctx, const char *ip, const char *password,
     ctx->password_[sizeof(ctx->password_) - 1] = '\0';
     strncpy(ctx->serial_, serial, sizeof(ctx->serial_) - 1);
     ctx->serial_[sizeof(ctx->serial_) - 1] = '\0';
+
+    memset(&ctx->bambu_status_, 0, sizeof(ctx->bambu_status_));
 
     char broker_uri[128];
     snprintf(broker_uri, sizeof(broker_uri), "mqtts://%s:%d", ctx->ip_, BAMBU_MQTT_DEFAULT_PORT);

@@ -1,0 +1,21 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 5.5.4
+  jef-sure/mjson:
+    component_hash: 82d83b445d6edc0a7a1b7d832eaee96bf83a0246c19684cc225dfe79f405b768
+    dependencies:
+    - name: idf
+      require: private
+      version: '*'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 0.0.2
+direct_dependencies:
+- idf
+- jef-sure/mjson
+manifest_hash: 50f733434cb30ef8206cdfe490bd24fda6ffee209ec274795a9566294116797c
+target: esp32c3
+version: 2.0.0
