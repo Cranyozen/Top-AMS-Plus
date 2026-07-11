@@ -8,9 +8,10 @@
 extern "C" {
 #endif
 
-typedef struct {
-	nvs_handle_t handle;
-	const char *nvs_namespace;
+typedef struct
+{
+    nvs_handle_t handle;
+    const char *nvs_namespace;
 } nvs_context_t;
 
 esp_err_t Nvs_init(nvs_context_t *context);

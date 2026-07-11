@@ -16,7 +16,8 @@ static const char *TAG = "[NVS]";
 
 // static const char *NVS_NAMESPACE = "storage";
 
-typedef struct {
+typedef struct
+{
     nvs_type_t type;
     const char *str;
 } type_str_pair_t;
@@ -42,13 +43,12 @@ static const char *type_to_str(nvs_type_t type)
     for (int i = 0; i < TYPE_STR_PAIR_SIZE; i++) {
         const type_str_pair_t *p = &type_str_pair[i];
         if (p->type == type) {
-            return  p->str;
+            return p->str;
         }
     }
 
     return "Unknown";
 }
-
 
 esp_err_t Nvs_init(nvs_context_t *context)
 {
@@ -64,7 +64,7 @@ esp_err_t Nvs_init(nvs_context_t *context)
 
     // Open NVS handle
     ESP_LOGI(TAG, "Opening Non-Volatile Storage (NVS) handle...");
-    
+
     err = nvs_open(context->nvs_namespace, NVS_READWRITE, &context->handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
@@ -73,14 +73,12 @@ esp_err_t Nvs_init(nvs_context_t *context)
     return ESP_OK;
 }
 
-
 esp_err_t Nvs_close(nvs_context_t *context)
 {
     nvs_close(context->handle);
     ESP_LOGI(TAG, "NVS handle closed.");
     return ESP_OK;
 }
-
 
 // Template specialization declarations for NVS get operations
 template<typename T>
@@ -193,7 +191,6 @@ esp_err_t Nvs_get_blob(nvs_context_t *context, const char *key, char *buf, size_
     }
     return err;
 }
-
 
 // Template specialization declarations for NVS set operations
 template<typename T>
