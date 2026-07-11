@@ -1,0 +1,1 @@
+#define NVS_NAMESPACE "storage"

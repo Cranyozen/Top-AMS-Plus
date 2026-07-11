@@ -53,7 +53,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
     }
 }
 
-void Wifi_init(void)
+void WiFi_init(void)
 {
     s_wifi_event_group = xEventGroupCreate();
 
@@ -93,13 +93,13 @@ void Wifi_init(void)
     // }
 }
 
-void Wifi_set_mode(wifi_mode_t mode)
+void WiFi_set_mode(wifi_mode_t mode)
 {
     ESP_ERROR_CHECK(esp_wifi_set_mode(mode));
     ESP_LOGI(TAG, "WiFi mode set to %s", (mode == WIFI_MODE_STA) ? "STA" : (mode == WIFI_MODE_AP) ? "AP" : "STA+AP");
 }
 
-void Wifi_start()
+void WiFi_start()
 {
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_LOGI(TAG, "wifi started.");
