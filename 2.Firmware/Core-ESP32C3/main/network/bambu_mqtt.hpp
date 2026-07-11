@@ -11,23 +11,24 @@
 #define BAMBU_MQTT_TOPIC_REPORT  "report"
 #define BAMBU_MQTT_TOPIC_REQUEST "request"
 
-enum BambuMQTTStatus
+enum bambu_mqtt_status_t
 {
     BAMBU_MQTT_STATUS_DISCONNECTED = 0,
     BAMBU_MQTT_STATUS_CONNECTED,
     BAMBU_MQTT_STATUS_ERROR
 };
 
-typedef struct
+struct bambu_mqtt_context_t
 {
     char ip_[16]; // max xxx.xxx.xxx.xxx\0
     char password_[32];
     char serial_[32];
     esp_mqtt_client_handle_t client_;
-    BambuMQTTStatus status_;
-} BambuMQTT_context_t;
+    bambu_mqtt_status_t mqtt_status_;
+    bambu_status_t bambu_status_;
+};
 
-void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial);
-void BMQTT_start(BambuMQTT_context_t *ctx);
-void BMQTT_stop(BambuMQTT_context_t *ctx);
-int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message);
+void BMQTT_init(bambu_mqtt_context_t *ctx, const char *ip, const char *password, const char *serial);
+void BMQTT_start(bambu_mqtt_context_t *ctx);
+void BMQTT_stop(bambu_mqtt_context_t *ctx);
+int BMQTT_publish_message(bambu_mqtt_context_t *ctx, const char *message);

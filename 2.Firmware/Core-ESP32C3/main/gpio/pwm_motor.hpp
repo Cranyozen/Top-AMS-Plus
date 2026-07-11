@@ -12,7 +12,7 @@
 #define PWM_MOTOR_DEFAULT_ENABLED          false
 #define PWM_MOTOR_DEFAULT_MIN_PWM_DUTY     6000
 
-typedef struct
+struct pwm_motor_config_t
 {
     int gpio_num1;
     int gpio_num2;
@@ -23,11 +23,10 @@ typedef struct
     uint16_t speed_percent; // Speed percentage (0-10000 for 0.00% to 100.00%)
     uint16_t min_pwm_duty;
 
-    pwm_config_t _pwm_config1;
-    pwm_config_t _pwm_config2;
-    bool _is_enabled;
-
-} pwm_motor_config_t;
+    pwm_config_t pwm_config1_;
+    pwm_config_t pwm_config2_;
+    bool is_enabled_;
+};
 
 void PWM_Motor_init(pwm_motor_config_t *config, gpio_num_t gpio_num1, gpio_num_t gpio_num2, pwm_channel_t channel1, pwm_channel_t channel2,
     uint16_t speed_percent, uint16_t min_pwm_duty, bool is_reverse_polarity, bool is_reverse, bool is_enabled);

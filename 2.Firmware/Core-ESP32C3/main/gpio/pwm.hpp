@@ -11,7 +11,7 @@
 #define PWM_DEFAULT_DUTY_PERCENT 0
 #define PWM_DEFAULT_HPOINT       0
 
-typedef enum
+enum pwm_channel_t
 {
     PWM_CHANNEL_0 = LEDC_CHANNEL_0,
     PWM_CHANNEL_1 = LEDC_CHANNEL_1,
@@ -19,14 +19,14 @@ typedef enum
     PWM_CHANNEL_3 = LEDC_CHANNEL_3,
     PWM_CHANNEL_4 = LEDC_CHANNEL_4,
     PWM_CHANNEL_5 = LEDC_CHANNEL_5,
-} pwm_channel_t;
+};
 
-typedef struct
+struct pwm_config_t
 {
     gpio_num_t gpio_num;
     pwm_channel_t channel;
     uint16_t duty_percent; // Duty cycle percentage (0-10000 for 0.00% to 100.00%)
-} pwm_config_t;
+};
 
 void PWM_init(pwm_config_t *config, pwm_channel_t channel, gpio_num_t gpio_num, uint16_t duty_percent);
 void PWM_init(pwm_config_t *config, pwm_channel_t channel, gpio_num_t gpio_num);

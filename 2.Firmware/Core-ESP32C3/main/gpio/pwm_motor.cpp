@@ -11,10 +11,10 @@ void PWM_Motor_init(pwm_motor_config_t *config, gpio_num_t gpio_num1, gpio_num_t
     config->min_pwm_duty = min_pwm_duty;
     config->is_reverse_polarity = is_reverse_polarity;
     config->is_reverse = is_reverse;
-    config->_is_enabled = is_enabled;
+    config->is_enabled_ = is_enabled;
 
-    PWM_init(&config->_pwm_config1, (pwm_channel_t)channel1, (gpio_num_t)gpio_num1, speed_percent);
-    PWM_init(&config->_pwm_config2, (pwm_channel_t)channel2, (gpio_num_t)gpio_num2, 0);
+    PWM_init(&config->pwm_config1_, (pwm_channel_t)channel1, (gpio_num_t)gpio_num1, speed_percent);
+    PWM_init(&config->pwm_config2_, (pwm_channel_t)channel2, (gpio_num_t)gpio_num2, 0);
 }
 
 void PWM_Motor_init(pwm_motor_config_t *config, gpio_num_t gpio_num1, gpio_num_t gpio_num2, pwm_channel_t channel1, pwm_channel_t channel2)
@@ -25,11 +25,11 @@ void PWM_Motor_init(pwm_motor_config_t *config, gpio_num_t gpio_num1, gpio_num_t
 
 void _PWM_Motor_update(pwm_motor_config_t *config)
 {
-    if (!config->_is_enabled) {
-        PWM_set_duty(&config->_pwm_config1, 0);
-        PWM_set_duty(&config->_pwm_config2, 0);
-        PWM_stop(&config->_pwm_config1);
-        PWM_stop(&config->_pwm_config2);
+    if (!config->is_enabled_) {
+        PWM_set_duty(&config->pwm_config1_, 0);
+        PWM_set_duty(&config->pwm_config2_, 0);
+        PWM_stop(&config->pwm_config1_);
+        PWM_stop(&config->pwm_config2_);
         return;
     }
     uint16_t effective_speed
@@ -42,14 +42,14 @@ void _PWM_Motor_update(pwm_motor_config_t *config)
         1, 0, 1
         1, 1, 0
         */
-        PWM_set_duty(&config->_pwm_config1, 0);
-        PWM_set_duty(&config->_pwm_config2, effective_speed);
+        PWM_set_duty(&config->pwm_config1_, 0);
+        PWM_set_duty(&config->pwm_config2_, effective_speed);
     } else {
-        PWM_set_duty(&config->_pwm_config1, effective_speed);
-        PWM_set_duty(&config->_pwm_config2, 0);
+        PWM_set_duty(&config->pwm_config1_, effective_speed);
+        PWM_set_duty(&config->pwm_config2_, 0);
     }
-    PWM_start(&config->_pwm_config1);
-    PWM_start(&config->_pwm_config2);
+    PWM_start(&config->pwm_config1_);
+    PWM_start(&config->pwm_config2_);
 }
 
 void PWM_Motor_set_speed(pwm_motor_config_t *config, uint16_t speed_percent)
@@ -60,13 +60,13 @@ void PWM_Motor_set_speed(pwm_motor_config_t *config, uint16_t speed_percent)
 
 void PWM_Motor_start(pwm_motor_config_t *config)
 {
-    config->_is_enabled = true;
+    config->is_enabled_ = true;
     _PWM_Motor_update(config);
 }
 
 void PWM_Motor_stop(pwm_motor_config_t *config)
 {
-    config->_is_enabled = false;
+    config->is_enabled_ = false;
     _PWM_Motor_update(config);
 }
 

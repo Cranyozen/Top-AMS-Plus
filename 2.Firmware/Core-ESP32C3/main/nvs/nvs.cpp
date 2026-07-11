@@ -16,11 +16,11 @@ static const char *TAG = "[NVS]";
 
 // static const char *NVS_NAMESPACE = "storage";
 
-typedef struct
+struct type_str_pair_t
 {
     nvs_type_t type;
     const char *str;
-} type_str_pair_t;
+};
 
 static const type_str_pair_t type_str_pair[] = {
     { NVS_TYPE_I8, "i8" },

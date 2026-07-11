@@ -13,8 +13,8 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
-    BambuMQTT_context_t *ctx = (BambuMQTT_context_t *)handler_args;
-    ctx->status_ = BAMBU_MQTT_STATUS_CONNECTED;
+    bambu_mqtt_context_t *ctx = (bambu_mqtt_context_t *)handler_args;
+    ctx->mqtt_status_ = BAMBU_MQTT_STATUS_CONNECTED;
     switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
@@ -33,7 +33,7 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
-            ctx->status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
+            ctx->mqtt_status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
             break;
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
@@ -49,7 +49,7 @@ void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
-            ctx->status_ = BAMBU_MQTT_STATUS_ERROR;
+            ctx->mqtt_status_ = BAMBU_MQTT_STATUS_ERROR;
             break;
         default:
             ESP_LOGI(TAG, "Other event id:%d", event->event_id);
@@ -62,15 +62,15 @@ void wifi_event_handler(void *handler_args, esp_event_base_t base, int32_t event
     ESP_LOGD(TAG, "WiFi Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
     if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ESP_LOGI(TAG, "WiFi connected, start MQTT client...");
-        BambuMQTT_context_t *ctx = (BambuMQTT_context_t *)handler_args;
+        bambu_mqtt_context_t *ctx = (bambu_mqtt_context_t *)handler_args;
         esp_mqtt_client_start(ctx->client_);
     }
 }
 
-void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, const char *serial)
+void BMQTT_init(bambu_mqtt_context_t *ctx, const char *ip, const char *password, const char *serial)
 {
     ctx->client_ = nullptr;
-    ctx->status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
+    ctx->mqtt_status_ = BAMBU_MQTT_STATUS_DISCONNECTED;
     strncpy(ctx->ip_, ip, sizeof(ctx->ip_) - 1);
     ctx->ip_[sizeof(ctx->ip_) - 1] = '\0';
     strncpy(ctx->password_, password, sizeof(ctx->password_) - 1);
@@ -106,12 +106,12 @@ void BMQTT_init(BambuMQTT_context_t *ctx, const char *ip, const char *password, 
     esp_mqtt_client_register_event(ctx->client_, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, ctx);
 }
 
-void BMQTT_start(BambuMQTT_context_t *ctx)
+void BMQTT_start(bambu_mqtt_context_t *ctx)
 {
     esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handler, ctx);
 }
 
-void BMQTT_stop(BambuMQTT_context_t *ctx)
+void BMQTT_stop(bambu_mqtt_context_t *ctx)
 {
     if (ctx->client_) {
         esp_mqtt_client_stop(ctx->client_);
@@ -121,7 +121,7 @@ void BMQTT_stop(BambuMQTT_context_t *ctx)
     }
 }
 
-int BMQTT_publish_message(BambuMQTT_context_t *ctx, const char *message)
+int BMQTT_publish_message(bambu_mqtt_context_t *ctx, const char *message)
 {
     if (!ctx->client_) {
         ESP_LOGE(TAG, "MQTT client not initialized");
